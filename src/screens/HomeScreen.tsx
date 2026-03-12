@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
@@ -29,7 +31,9 @@ const SAMPLE_MEMORIES: Memory[] = [
   { id: '10', title: 'Ran my first 10K', date: new Date('2024-04-07'), description: 'Didn\'t think I could do it. Legs were screaming by mile 4 but I crossed that finish line.', emotion: 'happy', category: 'milestone', importance: 3, location: 'Central Park, NYC' },
 ];
 
-export default function HomeScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
+export default function HomeScreen({ navigation }: Props) {
   const { memories, save } = useMemoryStorage();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null);
@@ -74,8 +78,18 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.appTitle}>MemorySky</Text>
-        <Text style={styles.subtitle}>Your galaxy of memories</Text>
+        <View>
+          <Text style={styles.appTitle}>MemorySky</Text>
+          <Text style={styles.subtitle}>Your galaxy of memories</Text>
+        </View>
+        {memories.length > 0 && (
+          <TouchableOpacity
+            style={styles.galaxyButton}
+            onPress={() => navigation.navigate('Galaxy')}
+          >
+            <Text style={styles.galaxyButtonText}>✦</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {memories.length === 0 ? (
@@ -116,9 +130,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgPrimary,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 12,
+  },
+  galaxyButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galaxyButtonText: {
+    fontSize: 18,
+    color: colors.accent,
   },
   appTitle: {
     fontSize: 32,

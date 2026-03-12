@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootStackParamList } from './src/types/Navigation';
 import HomeScreen from './src/screens/HomeScreen';
+import GalaxyScreen from './src/screens/GalaxyScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -14,6 +15,7 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Galaxy" component={GalaxyScreen} />
         </Stack.Navigator>
         <StatusBar style="light" />
       </NavigationContainer>
