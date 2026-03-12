@@ -23,6 +23,7 @@ const EMOTIONS: { type: EmotionType; label: string; color: string }[] = [
   { type: 'excited', label: 'Excited', color: emotionColors.excited },
   { type: 'peaceful', label: 'Peaceful', color: emotionColors.peaceful },
   { type: 'bittersweet', label: 'Bittersweet', color: emotionColors.bittersweet },
+  { type: 'angry', label: 'Angry', color: emotionColors.angry },
 ];
 
 const CATEGORIES: { type: CategoryType; label: string }[] = [

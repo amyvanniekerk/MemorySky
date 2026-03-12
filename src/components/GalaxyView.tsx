@@ -8,21 +8,25 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
 import { calculateStarPositions, StarPosition } from '../utils/galaxyLayout';
 
 const { width, height } = Dimensions.get('window');
-const GALAXY_SIZE = Math.min(width, height) - 20;
+export const GALAXY_SIZE = Math.min(width, height) - 20;
 const CENTER = GALAXY_SIZE / 2;
 
-// Background stars — tiny static dots scattered across the view
+// Wide background star field — extends well beyond the galaxy
+const BG_FIELD = GALAXY_SIZE * 3;
+const BG_OFFSET = -GALAXY_SIZE; // shift so galaxy sits in the center of the field
+
 function generateBackgroundStars(count: number) {
   const stars = [];
   for (let i = 0; i < count; i++) {
     stars.push({
-      x: Math.random() * GALAXY_SIZE,
-      y: Math.random() * GALAXY_SIZE,
+      x: Math.random() * BG_FIELD + BG_OFFSET,
+      y: Math.random() * BG_FIELD + BG_OFFSET,
       size: Math.random() * 1.5 + 0.5,
       opacity: Math.random() * 0.5 + 0.1,
     });
@@ -30,7 +34,7 @@ function generateBackgroundStars(count: number) {
   return stars;
 }
 
-const BG_STARS = generateBackgroundStars(120);
+const BG_STARS = generateBackgroundStars(200);
 
 interface GalaxyViewProps {
   memories: Memory[];
@@ -95,7 +99,6 @@ function Star({
   const color = emotionColors[star.memory.emotion];
 
   useEffect(() => {
-    // Staggered fade in
     Animated.timing(fadeIn, {
       toValue: 1,
       duration: 600,
@@ -103,7 +106,6 @@ function Star({
       useNativeDriver: true,
     }).start();
 
-    // Pulse
     const duration = 2000 + (index % 7) * 600;
     Animated.loop(
       Animated.sequence([
@@ -123,7 +125,7 @@ function Star({
     ).start();
   }, []);
 
-  const touchSize = Math.max(star.size * 5, 30);
+  const touchSize = Math.max(star.size * 3, 24);
 
   return (
     <Animated.View
@@ -144,56 +146,43 @@ function Star({
         style={styles.starTouchArea}
         activeOpacity={0.7}
       >
-        {/* Outer glow — large and soft */}
+        {/* Glow halo */}
         <View
           style={{
             position: 'absolute',
-            width: star.size * 6,
-            height: star.size * 6,
-            borderRadius: star.size * 3,
+            width: star.size * 3,
+            height: star.size * 3,
+            borderRadius: star.size * 1.5,
             backgroundColor: color,
-            opacity: 0.08,
+            opacity: 0.1,
           }}
         />
-        {/* Mid glow */}
+        {/* 4-pointed star SVG */}
         <View
           style={{
             position: 'absolute',
-            width: star.size * 3.5,
-            height: star.size * 3.5,
-            borderRadius: star.size * 1.75,
-            backgroundColor: color,
-            opacity: 0.2,
-          }}
-        />
-        {/* Core — colored */}
-        <View
-          style={{
-            width: star.size * 2,
-            height: star.size * 2,
-            borderRadius: star.size,
-            backgroundColor: color,
             ...Platform.select({
               ios: {
                 shadowColor: color,
                 shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
+                shadowOpacity: 0.9,
                 shadowRadius: star.size * 2,
               },
             }),
           }}
-        />
-        {/* White-hot center */}
-        <View
-          style={{
-            position: 'absolute',
-            width: star.size * 0.8,
-            height: star.size * 0.8,
-            borderRadius: star.size * 0.4,
-            backgroundColor: '#ffffff',
-            opacity: 0.7,
-          }}
-        />
+        >
+          <Svg width={star.size * 3} height={star.size * 3} viewBox="0 0 100 100">
+            <Path
+              d="M50 0 C50 30, 70 50, 100 50 C70 50, 50 70, 50 100 C50 70, 30 50, 0 50 C30 50, 50 30, 50 0Z"
+              fill={color}
+            />
+            <Path
+              d="M50 30 C50 42, 58 50, 70 50 C58 50, 50 58, 50 70 C50 58, 42 50, 30 50 C42 50, 50 42, 50 30Z"
+              fill="#ffffff"
+              opacity={0.6}
+            />
+          </Svg>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -212,7 +201,6 @@ function ConstellationLine({
 
   return (
     <>
-      {/* Glow line */}
       <View
         style={[
           styles.constellationLine,
@@ -229,7 +217,6 @@ function ConstellationLine({
           },
         ]}
       />
-      {/* Core line */}
       <View
         style={[
           styles.constellationLine,
@@ -289,7 +276,7 @@ export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 120000, // 2 minutes for full rotation
+        duration: 120000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -303,7 +290,7 @@ export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
 
   return (
     <View style={styles.outerContainer}>
-      {/* Background star field (doesn't rotate) */}
+      {/* Wide background star field — extends beyond galaxy */}
       {BG_STARS.map((s, i) => (
         <BgStar key={i} {...s} index={i} />
       ))}
@@ -311,7 +298,7 @@ export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
       {/* Rotating galaxy layer */}
       <Animated.View
         style={[
-          styles.container,
+          styles.galaxyLayer,
           { transform: [{ rotate: rotation }] },
         ]}
       >
@@ -326,15 +313,17 @@ export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
           <ConstellationLine key={i} {...line} />
         ))}
 
-        {/* Memory stars */}
-        {stars.map((star, i) => (
-          <Star
-            key={star.memory.id}
-            star={star}
-            index={i}
-            onPress={() => onStarPress(star.memory)}
-          />
-        ))}
+        {/* Memory stars — sorted oldest-first so newest render on top */}
+        {[...stars]
+          .sort((a, b) => a.memory.date.getTime() - b.memory.date.getTime())
+          .map((star, i) => (
+            <Star
+              key={star.memory.id}
+              star={star}
+              index={i}
+              onPress={() => onStarPress(star.memory)}
+            />
+          ))}
       </Animated.View>
     </View>
   );
@@ -344,13 +333,12 @@ const styles = StyleSheet.create({
   outerContainer: {
     width: GALAXY_SIZE,
     height: GALAXY_SIZE,
-    alignSelf: 'center',
+    overflow: 'visible',
   },
-  container: {
+  galaxyLayer: {
     width: GALAXY_SIZE,
     height: GALAXY_SIZE,
   },
-  // Nebula glow layers — concentric circles
   nebulaLayer: {
     position: 'absolute',
     borderRadius: 9999,

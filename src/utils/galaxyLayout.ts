@@ -52,16 +52,16 @@ export function calculateStarPositions(
 
     // Spiral: base angle from category + time-based rotation
     const baseAngle = CATEGORY_ANGLES[memory.category];
-    const spiralTwist = timeNorm * Math.PI * 3; // 1.5 full rotations
-    // Small deterministic offset based on id to prevent overlap
-    const idOffset = hashString(memory.id) * 0.4 - 0.2;
+    const spiralTwist = timeNorm * Math.PI * 0.8; // gentle twist within category arm
+    // Deterministic offset based on id to prevent overlap
+    const idOffset = hashString(memory.id) * 1.2 - 0.6;
     const angle = baseAngle + spiralTwist + idOffset;
 
     const x = centerX + Math.cos(angle) * radius;
     const y = centerY + Math.sin(angle) * radius;
 
-    // Star size based on importance (3 to 8 radius)
-    const size = 3 + memory.importance * 1.5;
+    // Star size based on importance (2 to 7)
+    const size = 2 + memory.importance * 1;
 
     return { memory, x, y, size };
   });

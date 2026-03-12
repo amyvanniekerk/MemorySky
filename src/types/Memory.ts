@@ -1,4 +1,4 @@
-export type EmotionType = 'happy' | 'sad' | 'nostalgic' | 'grateful' | 'excited' | 'peaceful' | 'bittersweet';
+export type EmotionType = 'happy' | 'sad' | 'nostalgic' | 'grateful' | 'excited' | 'peaceful' | 'bittersweet' | 'angry';
 
 export type CategoryType = 'childhood' | 'career' | 'travel' | 'family' | 'friendship' | 'romance' | 'milestone' | 'everyday';
 

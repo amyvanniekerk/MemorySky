@@ -14,7 +14,7 @@ import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
-import GalaxyView from '../components/GalaxyView';
+import InteractiveGalaxy from '../components/InteractiveGalaxy';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
@@ -34,11 +34,7 @@ export default function GalaxyScreen({ navigation }: Props) {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Your Galaxy</Text>
-          <View style={styles.memoryCount}>
-            <Text style={styles.memoryCountText}>
-              {memories.length} {memories.length === 1 ? 'star' : 'stars'}
-            </Text>
-          </View>
+          <View style={{ width: 36 }} />
         </View>
 
         {/* Galaxy */}
@@ -52,7 +48,7 @@ export default function GalaxyScreen({ navigation }: Props) {
           </View>
         ) : (
           <View style={styles.galaxyContainer}>
-            <GalaxyView memories={memories} onStarPress={setSelectedMemory} />
+            <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} />
           </View>
         )}
 
@@ -200,6 +196,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   // Empty
   emptyState: {

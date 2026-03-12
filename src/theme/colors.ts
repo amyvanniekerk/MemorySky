@@ -40,12 +40,13 @@ export const colors = {
 };
 
 // Emotion star colors — galaxy-themed
-export const emotionColors = {
-  happy: '#FFD700',         // gold star
-  sad: '#4a9ec8',           // soft blue
-  nostalgic: '#c060d0',     // magenta glow
-  grateful: '#4ac8b0',      // teal wisp
-  excited: '#ff4bfb',       // hot pink/magenta
-  peaceful: '#60d0d0',      // cyan calm
-  bittersweet: '#b068bf',   // muted purple-pink
-} as const;
+export const emotionColors: Record<string, string> = {
+  happy: '#FFD93D',         // warm yellow
+  sad: '#4A90E2',           // soft blue
+  nostalgic: '#C8A2C8',     // dusty lavender
+  grateful: '#6BCB77',      // gentle green
+  excited: '#FF8C42',       // energetic orange
+  peaceful: '#A8E6CF',      // calm mint
+  bittersweet: '#B08BBB',   // muted purple
+  angry: '#E63946',         // fiery red
+};
