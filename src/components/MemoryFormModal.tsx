@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { Memory, EmotionType, CategoryType, ImportanceLevel } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
@@ -51,6 +52,12 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [location, setLocation] = useState('');
   const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const onDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (selectedDate) setDate(selectedDate);
+  };
 
   useEffect(() => {
     if (editingMemory) {
@@ -75,13 +82,17 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
   }, [editingMemory, visible]);
 
   const pickPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setPhotoUri(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.warn('Failed to pick photo:', err);
     }
   };
 
@@ -139,6 +150,40 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
             value={title}
             onChangeText={setTitle}
           />
+
+          {/* Date */}
+          <Text style={styles.label}>Date</Text>
+          {Platform.OS === 'ios' ? (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="compact"
+              maximumDate={new Date()}
+              onChange={onDateChange}
+              themeVariant="dark"
+              accentColor={colors.teal}
+              style={styles.datePicker}
+            />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.dateButtonText}>
+                  {date.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  maximumDate={new Date()}
+                  onChange={onDateChange}
+                />
+              )}
+            </>
+          )}
 
           {/* Photo */}
           <Text style={styles.label}>Photo (optional)</Text>
@@ -298,6 +343,21 @@ const styles = StyleSheet.create({
   },
   saveTextDisabled: {
     opacity: 0.3,
+  },
+  datePicker: {
+    alignSelf: 'flex-start',
+  },
+  dateButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: colors.starWhite,
   },
   label: {
     fontSize: 13,
