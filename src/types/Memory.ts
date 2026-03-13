@@ -14,4 +14,5 @@ export interface Memory {
   importance: ImportanceLevel;
   photoUri?: string;
   location?: string;
+  hidden?: boolean;
 }

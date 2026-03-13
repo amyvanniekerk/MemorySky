@@ -52,6 +52,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
   const [importance, setImportance] = useState<ImportanceLevel>(3);
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [location, setLocation] = useState('');
+  const [hidden, setHidden] = useState(false);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -69,6 +70,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       setImportance(editingMemory.importance);
       setPhotoUri(editingMemory.photoUri);
       setLocation(editingMemory.location ?? '');
+      setHidden(editingMemory.hidden ?? false);
       setDate(editingMemory.date);
     } else {
       setTitle('');
@@ -78,6 +80,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       setImportance(3);
       setPhotoUri(undefined);
       setLocation('');
+      setHidden(false);
       setDate(new Date());
     }
   }, [editingMemory, visible]);
@@ -109,6 +112,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       importance,
       photoUri,
       location: location.trim() || undefined,
+      hidden,
     });
   };
 
@@ -302,6 +306,21 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
             value={location}
             onChangeText={setLocation}
           />
+
+          {/* Hide toggle — only show when editing */}
+          {editingMemory && (
+            <>
+              <Text style={styles.label}>Visibility</Text>
+              <TouchableOpacity
+                style={[styles.hideToggle, hidden && styles.hideToggleActive]}
+                onPress={() => setHidden(!hidden)}
+              >
+                <Text style={styles.hideToggleText}>
+                  {hidden ? '◌  Hidden from galaxy' : '★  Visible in galaxy'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </View>
     </Modal>
@@ -480,5 +499,21 @@ const styles = StyleSheet.create({
     color: colors.starWhite,
     fontSize: 14,
     fontWeight: '600',
+  },
+  hideToggle: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  hideToggleActive: {
+    backgroundColor: 'rgba(230, 57, 70, 0.15)',
+    borderColor: 'rgba(230, 57, 70, 0.3)',
+  },
+  hideToggleText: {
+    fontSize: 14,
+    color: colors.textSecondary,
   },
 });

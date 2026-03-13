@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,25 @@ import { colors, emotionColors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
 import InteractiveGalaxy from '../components/galaxy/InteractiveGalaxy';
 import GalaxyShareCapture from '../components/galaxy/GalaxyShareCapture';
+import GalaxyToast from '../components/galaxy/GalaxyToast';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
 export default function GalaxyScreen({ navigation }: Props) {
   const { memories } = useMemoryStorage();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const [hiddenToast, setHiddenToast] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHiddenStarPress = (x: number, y: number) => {
+    if (hiddenToast.visible) return;
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setHiddenToast({ visible: true, x, y });
+    toastTimer.current = setTimeout(() => {
+      setHiddenToast((prev) => ({ ...prev, visible: false }));
+      toastTimer.current = null;
+    }, 2200);
+  };
 
   return (
     <GalaxyShareCapture style={styles.container}>
@@ -61,7 +74,7 @@ export default function GalaxyScreen({ navigation }: Props) {
               </View>
             ) : (
               <View style={styles.galaxyContainer}>
-                <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} />
+                <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} onHiddenStarPress={handleHiddenStarPress} />
               </View>
             )}
 
@@ -161,6 +174,9 @@ export default function GalaxyScreen({ navigation }: Props) {
               )}
             </TouchableOpacity>
           </Modal>
+
+          {/* Hidden star toast */}
+          <GalaxyToast visible={hiddenToast.visible} message="This memory is hidden" x={hiddenToast.x} y={hiddenToast.y} />
         </>
       )}
     </GalaxyShareCapture>

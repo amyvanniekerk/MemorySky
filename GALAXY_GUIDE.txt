@@ -1,0 +1,37 @@
+Galaxy View Guide
+=================
+
+How the Galaxy Works
+--------------------
+Each memory you create becomes a star in your galaxy. Stars are colored by
+emotion, sized by importance, and positioned by time and category. Related
+memories in the same category form constellations (lines connecting the stars).
+
+Interactions
+------------
+- Quick tap a star: opens the memory detail popup
+- Long press + drag a star: rotates the entire galaxy like a wheel
+- Pinch: zoom in/out
+- Double tap: toggle zoom
+
+Hidden Memories
+---------------
+You can hide a memory so it stays in the galaxy but is faded out. When a
+memory is hidden:
+
+- The star still appears in the galaxy but dimmed and greyed out
+- Tapping a hidden star will NOT open the memory detail
+- Instead, a small popup will show that the memory is hidden
+
+To hide or unhide a memory:
+1. Go to the Home screen
+2. Tap the memory card to open the edit modal
+3. Scroll to the "Visibility" toggle at the bottom
+4. Tap to switch between "Visible in galaxy" and "Hidden from galaxy"
+5. Save
+
+Sharing
+-------
+Tap the share button (top right) to capture a screenshot of your galaxy.
+The back and share buttons are automatically hidden from the screenshot
+so you get a clean image of just your galaxy.

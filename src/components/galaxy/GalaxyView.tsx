@@ -33,11 +33,12 @@ const BG_STARS = generateBackgroundStars(400);
 interface GalaxyViewProps {
   memories: Memory[];
   onStarPress: (memory: Memory) => void;
+  onHiddenStarPress?: (x: number, y: number) => void;
   onStarDragStart?: (absoluteX: number, absoluteY: number) => void;
   onStarDragMove?: (absoluteX: number, absoluteY: number) => void;
 }
 
-export default function GalaxyView({ memories, onStarPress, onStarDragStart, onStarDragMove }: GalaxyViewProps) {
+export default function GalaxyView({ memories, onStarPress, onHiddenStarPress, onStarDragStart, onStarDragMove }: GalaxyViewProps) {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   const stars = useMemo(
@@ -114,6 +115,7 @@ export default function GalaxyView({ memories, onStarPress, onStarDragStart, onS
               star={star}
               index={i}
               onPress={() => onStarPress(star.memory)}
+              onHiddenPress={onHiddenStarPress}
               onStarDragStart={onStarDragStart}
               onStarDragMove={onStarDragMove}
             />

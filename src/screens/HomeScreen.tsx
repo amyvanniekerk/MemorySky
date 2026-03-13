@@ -59,16 +59,6 @@ export default function HomeScreen({ navigation }: Props) {
     setModalVisible(true);
   };
 
-  const handleDeleteMemory = (memory: Memory) => {
-    Alert.alert('Delete Memory', `Are you sure you want to delete "${memory.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => save(memories.filter((m) => m.id !== memory.id)),
-      },
-    ]);
-  };
 
   const handleOpenNew = () => {
     setEditingMemory(null);
@@ -102,7 +92,7 @@ export default function HomeScreen({ navigation }: Props) {
             <MemoryCard
               memory={item}
               onPress={handleEditMemory}
-              onLongPress={handleDeleteMemory}
+
             />
           )}
           contentContainerStyle={styles.list}

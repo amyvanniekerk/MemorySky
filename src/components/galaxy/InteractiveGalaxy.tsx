@@ -11,11 +11,13 @@ import useGalaxyGestures from '../../hooks/useGalaxyGestures';
 interface InteractiveGalaxyProps {
   memories: Memory[];
   onStarPress: (memory: Memory) => void;
+  onHiddenStarPress?: (x: number, y: number) => void;
 }
 
 export default function InteractiveGalaxy({
   memories,
   onStarPress,
+  onHiddenStarPress,
 }: InteractiveGalaxyProps) {
   const {
     pinchRef,
@@ -48,6 +50,7 @@ export default function InteractiveGalaxy({
             <GalaxyView
               memories={memories}
               onStarPress={onStarPress}
+              onHiddenStarPress={onHiddenStarPress}
               onStarDragStart={onStarDragStart}
               onStarDragMove={onStarDragMove}
             />

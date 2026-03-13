@@ -10,10 +10,9 @@ function getEmotionColor(emotion: EmotionType): string {
 interface MemoryCardProps {
   memory: Memory;
   onPress: (memory: Memory) => void;
-  onLongPress: (memory: Memory) => void;
 }
 
-export default function MemoryCard({ memory, onPress, onLongPress }: MemoryCardProps) {
+export default function MemoryCard({ memory, onPress }: MemoryCardProps) {
   const starColor = getEmotionColor(memory.emotion);
 
   const cardContent = (
@@ -51,7 +50,6 @@ export default function MemoryCard({ memory, onPress, onLongPress }: MemoryCardP
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => onPress(memory)}
-        onLongPress={() => onLongPress(memory)}
       >
         <ImageBackground
           source={{ uri: memory.photoUri }}
@@ -69,7 +67,7 @@ export default function MemoryCard({ memory, onPress, onLongPress }: MemoryCardP
       style={styles.card}
       activeOpacity={0.7}
       onPress={() => onPress(memory)}
-      onLongPress={() => onLongPress(memory)}
+
     >
       {cardContent}
     </TouchableOpacity>
