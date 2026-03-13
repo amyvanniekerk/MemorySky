@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
@@ -22,7 +23,13 @@ import GalaxyToast from '../components/galaxy/GalaxyToast';
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
 export default function GalaxyScreen({ navigation }: Props) {
-  const { memories } = useMemoryStorage();
+  const { memories, reload } = useMemoryStorage();
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [hiddenToast, setHiddenToast] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

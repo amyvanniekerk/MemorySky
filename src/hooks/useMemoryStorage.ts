@@ -4,26 +4,32 @@ import { Memory } from '../types/Memory';
 
 const STORAGE_KEY = 'memorySky_memories';
 
+function parseMemories(data: string): Memory[] {
+  return JSON.parse(data).map(
+    (m: Omit<Memory, 'date'> & { date: string }) => ({
+      ...m,
+      date: new Date(m.date),
+    })
+  );
+}
+
 export default function useMemoryStorage() {
   const [memories, setMemories] = useState<Memory[]>([]);
 
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((data) => {
-        if (data) {
-          const parsed: Memory[] = JSON.parse(data).map(
-            (m: Omit<Memory, 'date'> & { date: string }) => ({
-              ...m,
-              date: new Date(m.date),
-            })
-          );
-          setMemories(parsed);
-        }
-      })
-      .catch((err) => {
-        console.warn('Failed to load memories:', err);
-      });
+  const reload = useCallback(async () => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEY);
+      if (data) {
+        setMemories(parseMemories(data));
+      }
+    } catch (err) {
+      console.warn('Failed to load memories:', err);
+    }
   }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   const save = useCallback(async (mems: Memory[]) => {
     setMemories(mems);
@@ -34,5 +40,5 @@ export default function useMemoryStorage() {
     }
   }, []);
 
-  return { memories, save };
+  return { memories, save, reload };
 }
