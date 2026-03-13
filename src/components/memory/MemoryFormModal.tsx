@@ -9,21 +9,27 @@ import {
   ScrollView,
   Platform,
   Image,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { Memory, EmotionType, CategoryType, ImportanceLevel } from '../../types/Memory';
 import { colors, emotionColors } from '../../theme/colors';
 
-const EMOTIONS: { type: EmotionType; label: string; color: string }[] = [
-  { type: 'happy', label: 'Happy', color: emotionColors.happy },
-  { type: 'sad', label: 'Sad', color: emotionColors.sad },
-  { type: 'nostalgic', label: 'Nostalgic', color: emotionColors.nostalgic },
-  { type: 'grateful', label: 'Grateful', color: emotionColors.grateful },
-  { type: 'excited', label: 'Excited', color: emotionColors.excited },
-  { type: 'peaceful', label: 'Peaceful', color: emotionColors.peaceful },
-  { type: 'bittersweet', label: 'Bittersweet', color: emotionColors.bittersweet },
-  { type: 'angry', label: 'Angry', color: emotionColors.angry },
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const EMOTIONS: { type: EmotionType; label: string; icon: string; color: string }[] = [
+  { type: 'happy', label: 'Happy', icon: '☀', color: emotionColors.happy },
+  { type: 'sad', label: 'Sad', icon: '🌧', color: emotionColors.sad },
+  { type: 'nostalgic', label: 'Nostalgic', icon: '🌙', color: emotionColors.nostalgic },
+  { type: 'grateful', label: 'Grateful', icon: '✧', color: emotionColors.grateful },
+  { type: 'excited', label: 'Excited', icon: '⚡', color: emotionColors.excited },
+  { type: 'peaceful', label: 'Peaceful', icon: '☁', color: emotionColors.peaceful },
+  { type: 'bittersweet', label: 'Bittersweet', icon: '🥀', color: emotionColors.bittersweet },
+  { type: 'angry', label: 'Angry', icon: '🔥', color: emotionColors.angry },
 ];
 
 const CATEGORIES: { type: CategoryType; label: string }[] = [
@@ -55,6 +61,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
   const [hidden, setHidden] = useState(false);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const onDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
@@ -72,6 +79,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       setLocation(editingMemory.location ?? '');
       setHidden(editingMemory.hidden ?? false);
       setDate(editingMemory.date);
+      setShowDetails(true);
     } else {
       setTitle('');
       setDescription('');
@@ -82,6 +90,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       setLocation('');
       setHidden(false);
       setDate(new Date());
+      setShowDetails(false);
     }
   }, [editingMemory, visible]);
 
@@ -101,7 +110,7 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
   };
 
   const handleSave = () => {
-    if (!title.trim() || !description.trim()) return;
+    if (!title.trim()) return;
     onSave({
       id: editingMemory?.id,
       title: title.trim(),
@@ -116,7 +125,19 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
     });
   };
 
-  const canSave = title.trim() && description.trim();
+  const toggleDetails = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowDetails(!showDetails);
+  };
+
+  const canSave = title.trim().length > 0;
+
+  const detailsSummary = [
+    category !== 'everyday' ? category : null,
+    importance !== 3 ? `${importance}★` : null,
+    location.trim() ? location.trim() : null,
+    photoUri ? 'photo' : null,
+  ].filter(Boolean);
 
   return (
     <Modal
@@ -136,190 +157,210 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
             <TouchableOpacity onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              {editingMemory ? 'Edit Memory' : 'New Memory'}
-            </Text>
-            <TouchableOpacity onPress={handleSave}>
+            <TouchableOpacity onPress={handleSave} disabled={!canSave}>
               <Text style={[styles.saveText, !canSave && styles.saveTextDisabled]}>
                 Save
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Title */}
-          <Text style={styles.label}>Title *</Text>
+          {/* Title — large, prominent */}
           <TextInput
-            style={styles.input}
+            style={styles.titleInput}
             placeholder="What happened?"
             placeholderTextColor={colors.textSubtle}
             value={title}
             onChangeText={setTitle}
+            autoFocus={!editingMemory}
           />
 
-          {/* Date */}
-          <Text style={styles.label}>Date</Text>
-          {Platform.OS === 'ios' ? (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="compact"
-              maximumDate={new Date()}
-              onChange={onDateChange}
-              themeVariant="dark"
-              accentColor={colors.teal}
-              style={styles.datePicker}
-            />
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={styles.dateButtonText}>
-                  {date.toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  maximumDate={new Date()}
-                  onChange={onDateChange}
-                />
-              )}
-            </>
-          )}
-
-          {/* Photo */}
-          <Text style={styles.label}>Photo (optional)</Text>
-          {photoUri ? (
-            <View style={styles.photoPreviewContainer}>
-              <Image source={{ uri: photoUri }} style={styles.photoPreview} />
-              <TouchableOpacity
-                style={styles.photoRemove}
-                onPress={() => setPhotoUri(undefined)}
-              >
-                <Text style={styles.photoRemoveText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.photoPickerButton} onPress={pickPhoto}>
-              <Text style={styles.photoPickerIcon}>📷</Text>
-              <Text style={styles.photoPickerText}>Add a photo</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Description */}
-          <Text style={styles.label}>Description *</Text>
+          {/* Description — optional, conversational */}
           <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Tell the story..."
+            style={styles.descriptionInput}
+            placeholder="Tell the story... (optional)"
             placeholderTextColor={colors.textSubtle}
             value={description}
             onChangeText={setDescription}
             multiline
-            numberOfLines={4}
             textAlignVertical="top"
           />
 
-          {/* Emotion */}
-          <Text style={styles.label}>Emotion</Text>
-          <View style={styles.optionRow}>
-            {EMOTIONS.map((e) => (
-              <TouchableOpacity
-                key={e.type}
-                style={[
-                  styles.optionChip,
-                  emotion === e.type && {
-                    backgroundColor: e.color + '30',
-                    borderColor: e.color,
-                  },
-                ]}
-                onPress={() => setEmotion(e.type)}
-              >
-                <Text
+          {/* Emotion — always visible, fun to pick */}
+          <Text style={styles.sectionLabel}>How did it feel?</Text>
+          <View style={styles.emotionGrid}>
+            {EMOTIONS.map((e) => {
+              const isSelected = emotion === e.type;
+              return (
+                <TouchableOpacity
+                  key={e.type}
                   style={[
-                    styles.optionChipText,
-                    emotion === e.type && { color: e.color },
+                    styles.emotionChip,
+                    isSelected && {
+                      backgroundColor: e.color + '25',
+                      borderColor: e.color,
+                    },
                   ]}
+                  onPress={() => setEmotion(e.type)}
                 >
-                  {e.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={styles.emotionIcon}>{e.icon}</Text>
+                  <Text
+                    style={[
+                      styles.emotionLabel,
+                      isSelected && { color: e.color, fontWeight: '600' },
+                    ]}
+                  >
+                    {e.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
-          {/* Category */}
-          <Text style={styles.label}>Category</Text>
-          <View style={styles.optionRow}>
-            {CATEGORIES.map((c) => (
-              <TouchableOpacity
-                key={c.type}
-                style={[
-                  styles.optionChip,
-                  category === c.type && styles.optionChipSelected,
-                ]}
-                onPress={() => setCategory(c.type)}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    category === c.type && styles.optionChipTextSelected,
-                  ]}
-                >
-                  {c.label}
+          {/* Expandable details */}
+          <TouchableOpacity style={styles.detailsToggle} onPress={toggleDetails}>
+            <View style={styles.detailsToggleLeft}>
+              <Text style={styles.detailsToggleText}>
+                {showDetails ? 'Less details' : 'More details'}
+              </Text>
+              {!showDetails && detailsSummary.length > 0 && (
+                <Text style={styles.detailsSummary}>
+                  {detailsSummary.join(' · ')}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              )}
+            </View>
+            <View style={styles.detailsChevronWrap}>
+              <Text style={styles.detailsChevron}>{showDetails ? '−' : '+'}</Text>
+            </View>
+          </TouchableOpacity>
 
-          {/* Importance */}
-          <Text style={styles.label}>Importance</Text>
-          <View style={styles.importanceRow}>
-            {([1, 2, 3, 4, 5] as ImportanceLevel[]).map((level) => (
-              <TouchableOpacity
-                key={level}
-                style={styles.importanceStar}
-                onPress={() => setImportance(level)}
-              >
-                <Text
-                  style={[
-                    styles.importanceStarText,
-                    { color: level <= importance ? colors.accentGlow : colors.border },
-                  ]}
-                >
-                  ★
+          {showDetails && (
+            <View style={styles.detailsSection}>
+              {/* Date */}
+              <Text style={styles.detailLabel}>Date</Text>
+              {Platform.OS === 'ios' ? (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="compact"
+                  maximumDate={new Date()}
+                  onChange={onDateChange}
+                  themeVariant="dark"
+                  accentColor={colors.teal}
+                  style={styles.datePicker}
+                />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Text style={styles.dateButtonText}>
+                      {date.toLocaleDateString()}
+                    </Text>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={date}
+                      mode="date"
+                      maximumDate={new Date()}
+                      onChange={onDateChange}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Category */}
+              <Text style={styles.detailLabel}>Category</Text>
+              <View style={styles.optionRow}>
+                {CATEGORIES.map((c) => (
+                  <TouchableOpacity
+                    key={c.type}
+                    style={[
+                      styles.optionChip,
+                      category === c.type && styles.optionChipSelected,
+                    ]}
+                    onPress={() => setCategory(c.type)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        category === c.type && styles.optionChipTextSelected,
+                      ]}
+                    >
+                      {c.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Importance */}
+              <Text style={styles.detailLabel}>Importance</Text>
+              <View style={styles.importanceRow}>
+                {([1, 2, 3, 4, 5] as ImportanceLevel[]).map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={styles.importanceStar}
+                    onPress={() => setImportance(level)}
+                  >
+                    <Text
+                      style={[
+                        styles.importanceStarText,
+                        { color: level <= importance ? colors.accentGlow : colors.border },
+                      ]}
+                    >
+                      ★
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <Text style={styles.importanceLabel}>
+                  {importance === 1 ? 'Minor' : importance === 2 ? 'Small' : importance === 3 ? 'Moderate' : importance === 4 ? 'Major' : 'Life-changing'}
                 </Text>
-              </TouchableOpacity>
-            ))}
-            <Text style={styles.importanceLabel}>
-              {importance === 1 ? 'Minor' : importance === 2 ? 'Small' : importance === 3 ? 'Moderate' : importance === 4 ? 'Major' : 'Life-changing'}
-            </Text>
-          </View>
+              </View>
 
-          {/* Location */}
-          <Text style={styles.label}>Location (optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Where did this happen?"
-            placeholderTextColor={colors.textSubtle}
-            value={location}
-            onChangeText={setLocation}
-          />
+              {/* Photo */}
+              <Text style={styles.detailLabel}>Photo</Text>
+              {photoUri ? (
+                <View style={styles.photoPreviewContainer}>
+                  <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+                  <TouchableOpacity
+                    style={styles.photoRemove}
+                    onPress={() => setPhotoUri(undefined)}
+                  >
+                    <Text style={styles.photoRemoveText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.photoPickerButton} onPress={pickPhoto}>
+                  <Text style={styles.photoPickerIcon}>📷</Text>
+                  <Text style={styles.photoPickerText}>Add a photo</Text>
+                </TouchableOpacity>
+              )}
 
-          {/* Hide toggle — only show when editing */}
-          {editingMemory && (
-            <>
-              <Text style={styles.label}>Visibility</Text>
-              <TouchableOpacity
-                style={[styles.hideToggle, hidden && styles.hideToggleActive]}
-                onPress={() => setHidden(!hidden)}
-              >
-                <Text style={styles.hideToggleText}>
-                  {hidden ? '◌  Hidden from galaxy' : '★  Visible in galaxy'}
-                </Text>
-              </TouchableOpacity>
-            </>
+              {/* Location */}
+              <Text style={styles.detailLabel}>Location</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Where did this happen?"
+                placeholderTextColor={colors.textSubtle}
+                value={location}
+                onChangeText={setLocation}
+              />
+
+              {/* Hide toggle — only show when editing */}
+              {editingMemory && (
+                <>
+                  <Text style={styles.detailLabel}>Visibility</Text>
+                  <TouchableOpacity
+                    style={[styles.hideToggle, hidden && styles.hideToggleActive]}
+                    onPress={() => setHidden(!hidden)}
+                  >
+                    <Text style={styles.hideToggleText}>
+                      {hidden ? '◌  Hidden from galaxy' : '★  Visible in galaxy'}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           )}
         </ScrollView>
       </View>
@@ -343,18 +384,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
     paddingTop: Platform.OS === 'android' ? 16 : 0,
   },
   cancelText: {
     fontSize: 16,
     color: colors.cancel,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.starWhite,
-    letterSpacing: 0.5,
   },
   saveText: {
     fontSize: 16,
@@ -363,6 +398,104 @@ const styles = StyleSheet.create({
   },
   saveTextDisabled: {
     opacity: 0.3,
+  },
+  titleInput: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.starWhite,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: 12,
+  },
+  descriptionInput: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 24,
+    minHeight: 60,
+    paddingVertical: 8,
+    marginBottom: 24,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+  },
+  emotionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  emotionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  emotionIcon: {
+    fontSize: 14,
+  },
+  emotionLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  detailsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  detailsToggleLeft: {
+    flex: 1,
+  },
+  detailsToggleText: {
+    fontSize: 14,
+    color: colors.teal,
+    fontWeight: '600',
+  },
+  detailsSummary: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+    textTransform: 'capitalize',
+  },
+  detailsChevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailsChevron: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.teal,
+  },
+  detailsSection: {
+    paddingTop: 4,
+  },
+  detailLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.teal,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    marginTop: 20,
   },
   datePicker: {
     alignSelf: 'flex-start',
@@ -379,15 +512,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.starWhite,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.teal,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 10,
-    marginTop: 24,
-  },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
@@ -397,21 +521,6 @@ const styles = StyleSheet.create({
     color: colors.starWhite,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.accentGlow,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  textArea: {
-    minHeight: 110,
-    paddingTop: 16,
   },
   optionRow: {
     flexDirection: 'row',
@@ -461,7 +570,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.10)',
     borderRadius: 16,
     borderStyle: 'dashed',
-    paddingVertical: 28,
+    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
