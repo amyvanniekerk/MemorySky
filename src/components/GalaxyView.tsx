@@ -5,9 +5,9 @@ import {
   Dimensions,
   Animated,
   Easing,
-  TouchableOpacity,
   Platform,
 } from 'react-native';
+import { PanGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
@@ -39,6 +39,8 @@ const BG_STARS = generateBackgroundStars(200);
 interface GalaxyViewProps {
   memories: Memory[];
   onStarPress: (memory: Memory) => void;
+  onStarDragStart?: (absoluteX: number, absoluteY: number) => void;
+  onStarDragMove?: (absoluteX: number, absoluteY: number) => void;
 }
 
 // Twinkling background star
@@ -89,10 +91,14 @@ function Star({
   star,
   index,
   onPress,
+  onStarDragStart,
+  onStarDragMove,
 }: {
   star: StarPosition;
   index: number;
   onPress: () => void;
+  onStarDragStart?: (absoluteX: number, absoluteY: number) => void;
+  onStarDragMove?: (absoluteX: number, absoluteY: number) => void;
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -141,49 +147,65 @@ function Star({
         },
       ]}
     >
-      <TouchableOpacity
-        onPress={onPress}
-        style={styles.starTouchArea}
-        activeOpacity={0.7}
+      <TapGestureHandler
+        onHandlerStateChange={(e: any) => {
+          if (e.nativeEvent.state === State.ACTIVE) {
+            onPress();
+          }
+        }}
       >
-        {/* Glow halo */}
-        <View
-          style={{
-            position: 'absolute',
-            width: star.size * 3,
-            height: star.size * 3,
-            borderRadius: star.size * 1.5,
-            backgroundColor: color,
-            opacity: 0.1,
-          }}
-        />
-        {/* 4-pointed star SVG */}
-        <View
-          style={{
-            position: 'absolute',
-            ...Platform.select({
-              ios: {
-                shadowColor: color,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.9,
-                shadowRadius: star.size * 2,
-              },
-            }),
-          }}
-        >
-          <Svg width={star.size * 3} height={star.size * 3} viewBox="0 0 100 100">
-            <Path
-              d="M50 0 C50 30, 70 50, 100 50 C70 50, 50 70, 50 100 C50 70, 30 50, 0 50 C30 50, 50 30, 50 0Z"
-              fill={color}
-            />
-            <Path
-              d="M50 30 C50 42, 58 50, 70 50 C58 50, 50 58, 50 70 C50 58, 42 50, 30 50 C42 50, 50 42, 50 30Z"
-              fill="#ffffff"
-              opacity={0.6}
-            />
-          </Svg>
-        </View>
-      </TouchableOpacity>
+        <Animated.View style={styles.starTouchArea}>
+          <PanGestureHandler
+            activateAfterLongPress={300}
+            onGestureEvent={(e: any) => onStarDragMove?.(e.nativeEvent.absoluteX, e.nativeEvent.absoluteY)}
+            onHandlerStateChange={(e: any) => {
+              if (e.nativeEvent.state === State.ACTIVE) {
+                onStarDragStart?.(e.nativeEvent.absoluteX, e.nativeEvent.absoluteY);
+              }
+            }}
+          >
+            <Animated.View style={styles.starTouchArea}>
+              {/* Glow halo */}
+              <View
+                style={{
+                  position: 'absolute',
+                  width: star.size * 3,
+                  height: star.size * 3,
+                  borderRadius: star.size * 1.5,
+                  backgroundColor: color,
+                  opacity: 0.1,
+                }}
+              />
+              {/* 4-pointed star SVG */}
+              <View
+                style={{
+                  position: 'absolute',
+                  ...Platform.select({
+                    ios: {
+                      shadowColor: color,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.9,
+                      shadowRadius: star.size * 2,
+                    },
+                  }),
+                }}
+              >
+                <Svg width={star.size * 3} height={star.size * 3} viewBox="0 0 100 100">
+                  <Path
+                    d="M50 0 C50 30, 70 50, 100 50 C70 50, 50 70, 50 100 C50 70, 30 50, 0 50 C30 50, 50 30, 50 0Z"
+                    fill={color}
+                  />
+                  <Path
+                    d="M50 30 C50 42, 58 50, 70 50 C58 50, 50 58, 50 70 C50 58, 42 50, 30 50 C42 50, 50 42, 50 30Z"
+                    fill="#ffffff"
+                    opacity={0.6}
+                  />
+                </Svg>
+              </View>
+            </Animated.View>
+          </PanGestureHandler>
+        </Animated.View>
+      </TapGestureHandler>
     </Animated.View>
   );
 }
@@ -236,7 +258,7 @@ function ConstellationLine({
   );
 }
 
-export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
+export default function GalaxyView({ memories, onStarPress, onStarDragStart, onStarDragMove }: GalaxyViewProps) {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   const stars = useMemo(
@@ -322,6 +344,8 @@ export default function GalaxyView({ memories, onStarPress }: GalaxyViewProps) {
               star={star}
               index={i}
               onPress={() => onStarPress(star.memory)}
+              onStarDragStart={onStarDragStart}
+              onStarDragMove={onStarDragMove}
             />
           ))}
       </Animated.View>
