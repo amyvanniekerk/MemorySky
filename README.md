@@ -1,75 +1,149 @@
-🌌 MemorySky: Full Project Scope
-1. Executive Summary
+# MemorySky
 
-MemorySky is a mobile "Life-Log" that uses spatial mapping to turn memories into a personal galaxy. Unlike a standard list-based diary, it uses Godot 4 to render a 3D environment where time is distance, categories are clusters, and emotions are light.
+A mobile app that transforms your memories into a personal galaxy. Each memory becomes a star — colored by emotion, sized by importance, and grouped into constellations by category. Built with React Native and Expo.
 
-2. Functional Requirements (The "Core")
+## Project Scope
 
-A. Memory Engine (Flutter)
+MemorySky is a visual life-log where users record memories and watch them come alive as an interactive galaxy. Instead of scrolling through a list, users explore a spatial map of their life — pinching to zoom, tapping stars to revisit moments, and sharing screenshots of their sky.
 
-Input System: Title, Date (historical or current), Description, and Photos.
+### Core Concept
 
-The Emotional Scale: Selection of 8 core emotions (mapped to specific hex codes/shaders).
+- Every memory becomes a **star** in the galaxy
+- Stars are **colored by emotion** (8 emotion types, each with a unique color)
+- Stars are **sized by importance** (1–5 scale)
+- Stars in the same **category** form **constellations** (connected by lines)
+- Stars are **positioned by time and category** using a spiral layout algorithm
 
-Importance Weighting: A slider (1–10) that physically scales the star size and brightness in the Godot engine.
+## Tech Stack
 
-Data Storage: Local-first approach using SQLite/Hive for privacy and speed.
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Framework | React Native + Expo SDK 55 | Cross-platform mobile app |
+| Language | TypeScript | Type safety |
+| Navigation | React Navigation (Native Stack) | Screen routing with slide transitions |
+| State | React hooks + AsyncStorage | Local-first data persistence |
+| Rendering | React Native SVG | 4-pointed star shapes with glow halos |
+| Gestures | react-native-gesture-handler | Pinch zoom, double-tap, long-press drag, star taps |
+| Animations | React Native Animated API | Star pulsing, toast slide-up, fade transitions |
+| Sharing | expo-view-shot + expo-sharing | Galaxy screenshot export |
+| Styling | expo-linear-gradient | Ombre gradient toast effects |
+| Date Picker | @react-native-community/datetimepicker | Memory date selection |
+| Photos | expo-image-picker | Attach photos to memories |
 
-B. The Galaxy View (Godot 4 Engine)
+## Project Structure
 
-Spatial Algorithm: * Radius(r)=Time elapsed since birth/start date
+```
+src/
+  screens/
+    GalaxyScreen.tsx        # Main landing screen — interactive galaxy view
+    HomeScreen.tsx           # Memory list + add/edit memories
+  components/
+    galaxy/
+      GalaxyView.tsx         # Galaxy renderer — background stars, constellations, memory stars
+      InteractiveGalaxy.tsx   # Wraps GalaxyView with pinch/zoom/drag gestures
+      StarShape.tsx           # Individual memory star — SVG shape, glow, pulse animation
+      BgStar.tsx              # Twinkling background star
+      ConstellationLine.tsx   # Line connecting related stars
+      NebulaBackground.tsx    # Nebula gas cloud background
+      GalaxyShareCapture.tsx  # Screenshot capture wrapper for sharing
+      GalaxyToast.tsx         # Animated toast for hidden star taps
+    memory/
+      MemoryCard.tsx          # Memory list item card
+      MemoryFormModal.tsx     # Add/edit memory form with progressive disclosure
+      EmptyState.tsx          # Empty state with sample data loader
+  hooks/
+    useMemoryStorage.ts      # AsyncStorage persistence hook
+    useGalaxyGestures.ts     # Pinch, zoom, rotation, drag gesture logic
+  utils/
+    galaxyLayout.ts          # Spiral positioning algorithm for stars
+  types/
+    Memory.ts                # Memory, EmotionType, CategoryType types
+    Navigation.ts            # Navigation stack param types
+  theme/
+    colors.ts                # Galaxy-inspired color palette + emotion colors
+```
 
-Angle (θ)=Category ID ×Sector Offset +Noise
+## What's Been Built
 
-Visual Assets: 4-pointed SVG stars with dynamic glow halos and pulsing logic.
+### Galaxy View
+- Interactive 2D galaxy with SVG star shapes and glow halos
+- Stars colored by emotion (8 colors), sized by importance (1–5)
+- Constellation lines connecting stars in the same category
+- Twinkling background stars and nebula effects
+- Pinch to zoom, double-tap to toggle zoom, long-press drag to rotate
+- Tap a star to view the full memory detail in a modal popup
+- Galaxy is the landing screen when the app opens
 
-Nebula Heatmapping: Background gas clouds that procedurally change color based on the local density of specific emotional star colors.
+### Memory Management
+- Add memories with title, description, emotion, category, importance, date, photo, and location
+- Streamlined form: only title is required, emotion picker always visible, everything else behind a collapsible "More details" section
+- Edit existing memories by tapping them in the list view
+- Emotion picker with icons for each emotion type
+- Photo attachment via device image picker
+- Data persisted locally with AsyncStorage
 
-3. The "Viral" Feature Set (Phase 2 & Polish)
+### Hidden Memories
+- Hide/unhide memories via a toggle in the edit form
+- Hidden stars appear dimmed and greyed out in the galaxy
+- Tapping a hidden star shows an animated toast ("This memory is hidden") instead of opening the detail
+- Toast slides up from the star's position with an ombre gradient and glow pulse
+- Debounce guard prevents toast stacking on rapid taps
 
-The Supernova Reel (Auto-Video)
+### Sharing
+- Share button captures a clean screenshot of the galaxy (UI buttons auto-hidden)
+- Uses expo-view-shot for capture and expo-sharing for export
 
-A programmatic camera path that zooms into the most "Important" stars.
+### Navigation
+- Galaxy view is the initial screen
+- Home button navigates to the memory list with a slide transition
+- Galaxy button on the list view navigates back
 
-Generates a 9:16 vertical video with music sync for TikTok/Reels.
+## What Still Needs to Be Done
 
-Trigger: Automated at milestones (e.g., "Your First 100 Stars") or on-demand "Year in Review."
+### Near-term
+- [ ] Sort memories by date, emotion, or importance in spiral formation
+- [ ] Onboarding flow for first-time users
+- [ ] Haptic feedback on star interactions
+- [ ] Animated transitions when adding/removing stars from the galaxy
 
-Manual Constellations (Narrative)
+### Future Features
+- [ ] **Supernova Reel** — auto-generated video flythrough of the galaxy for sharing on social media
+- [ ] **Manual Constellations** — let users draw custom story paths by tapping stars in sequence, creating named constellation narratives
+- [ ] **Binary Systems** — social feature where two users can view their galaxies orbiting a shared center
+- [ ] **Nebula Heatmapping** — procedural background that changes color based on local density of emotional star colors
+- [ ] **Timeline scrubber** — slide through time to watch the galaxy grow
+- [ ] **Data export/import** — backup and restore memories
+- [ ] **Cloud sync** — optional sync across devices
 
-The "Star-Trace" tool: Users tap stars in sequence to create a named story path.
+## Getting Started
 
-Myth-Making: The app generates a "Constellation Card" showing the shape, the name (e.g., The Graduation Path), and the date range.
+```bash
+# Install dependencies
+npm install
 
-Binary Systems (Social)
+# Start the development server
+npx expo start
 
-The "Portal" interaction: A localized multiplayer view or deep-link sharing that lets users see two galaxies orbiting a shared center of gravity.
+# Run on iOS simulator
+npx expo run:ios
 
-Privacy Guard: Only "Public" flagged stars appear in a friend’s view.
+# Run on Android emulator
+npx expo run:android
+```
 
-4. Technical Architecture
+## Emotion Colors
 
-Layer	Technology	Responsibility
-Framework	Flutter	UI, Overlays, Settings, and Data Entry.
-Rendering	Godot 4 (GDExtension)	3D Space, Shaders, Physics-based Rotation.
-State	Riverpod	Synchronizing Flutter inputs with Godot's scene tree.
-Graphics	GLSL Shaders	Pulsing stars, Twinkling backgrounds, and Nebula glow.
-5. Implementation Roadmap (5-Week Sprint)
+| Emotion | Color | Hex |
+|---------|-------|-----|
+| Happy | Warm yellow | `#FFD93D` |
+| Sad | Soft blue | `#4A90E2` |
+| Nostalgic | Dusty lavender | `#C8A2C8` |
+| Grateful | Gentle green | `#6BCB77` |
+| Excited | Energetic orange | `#FF8C42` |
+| Peaceful | Calm mint | `#A8E6CF` |
+| Bittersweet | Warm dusty rose | `#D47B8A` |
+| Angry | Fiery red | `#E63946` |
 
-Week 1: The Foundation. Set up Flutter CRUD logic and Hive database. Define the "Emotion-to-Color" mapping.
+## Categories
 
-Week 2: The Big Bang. Integrate Godot. Implement the spiral coordinate math (r,θ) and basic star instantiation.
-
-Week 3: Tactile Feel. Build the rotation (atan2), pinch-to-zoom, and "Snap-to-Star" camera transitions.
-
-Week 4: The Viral Hooks. Develop the "Supernova" video renderer and the manual constellation drawing tool.
-
-Week 5: Polish & Launch. Onboarding flow (creating your "Sun"), haptic feedback, and App Store optimization.
-
-6. The "Viral" Checklist
-
-[ ] Does the galaxy look beautiful even with only 5 stars? (Initial "Nebula" padding).
-
-[ ] Is the export button prominent after adding a "Highly Important" memory?
-
-[ ] Can a user identify their "happiest" year just by looking at the galaxy color?
+Childhood, Career, Travel, Family, Friendship, Romance, Milestone, Everyday
