@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
-import { Memory, EmotionType } from '../types/Memory';
-import { colors, emotionColors } from '../theme/colors';
+import { Memory, EmotionType } from '../../types/Memory';
+import { colors, emotionColors } from '../../theme/colors';
 
 function getEmotionColor(emotion: EmotionType): string {
   return emotionColors[emotion] ?? '#FFFFFF';

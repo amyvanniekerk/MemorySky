@@ -47,6 +47,6 @@ export const emotionColors: Record<string, string> = {
   grateful: '#6BCB77',      // gentle green
   excited: '#FF8C42',       // energetic orange
   peaceful: '#A8E6CF',      // calm mint
-  bittersweet: '#B08BBB',   // muted purple
+  bittersweet: '#D47B8A',   // warm dusty rose
   angry: '#E63946',         // fiery red
 };

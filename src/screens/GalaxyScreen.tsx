@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,173 +8,162 @@ import {
   ScrollView,
   Image,
   Platform,
-  Alert,
 } from 'react-native';
-import ViewShot, { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
-import InteractiveGalaxy from '../components/InteractiveGalaxy';
+import InteractiveGalaxy from '../components/galaxy/InteractiveGalaxy';
+import GalaxyShareCapture from '../components/galaxy/GalaxyShareCapture';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
 export default function GalaxyScreen({ navigation }: Props) {
   const { memories } = useMemoryStorage();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
-  const galaxyRef = useRef<any>(null);
-
-  const shareGalaxy = useCallback(async () => {
-    try {
-      const uri = await captureRef(galaxyRef, {
-        format: 'png',
-        quality: 1,
-      });
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/png',
-        dialogTitle: 'Share your galaxy',
-      });
-    } catch (e) {
-      Alert.alert('Error', 'Could not capture galaxy');
-    }
-  }, []);
 
   return (
-    <View style={styles.container} ref={galaxyRef} collapsable={false}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header — minimal, floating over galaxy */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Your Galaxy</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={shareGalaxy}
-          >
-            <Text style={styles.backText}>↗</Text>
-          </TouchableOpacity>
-        </View>
+    <GalaxyShareCapture style={styles.container}>
+      {(isCapturing, onShare) => (
+        <>
+          <SafeAreaView style={styles.safeArea}>
+            {/* Header */}
+            <View style={styles.header}>
+              {!isCapturing ? (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Text style={styles.headerButtonText}>←</Text>
+                </TouchableOpacity>
+              ) : <View style={styles.headerSpacer} />}
+              <Text style={styles.title}>Your Galaxy</Text>
+              {!isCapturing ? (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={onShare}
+                >
+                  <Text style={styles.headerButtonText}>↗</Text>
+                </TouchableOpacity>
+              ) : <View style={styles.headerSpacer} />}
+            </View>
 
-        {/* Galaxy */}
-        {memories.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>✦</Text>
-            <Text style={styles.emptyText}>Your sky awaits</Text>
-            <Text style={styles.emptySubtext}>
-              Add memories to watch your galaxy come alive
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.galaxyContainer}>
-            <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} />
-          </View>
-        )}
-
-        {/* Legend */}
-        <View style={styles.legend}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {Object.entries(emotionColors).map(([emotion, color]) => (
-              <View key={emotion} style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: color }]} />
-                <Text style={styles.legendLabel}>{emotion}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-
-      {/* Memory detail popup */}
-      <Modal
-        visible={selectedMemory !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedMemory(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setSelectedMemory(null)}
-        >
-          {selectedMemory && (
-            <View style={styles.detailCard}>
-              {/* Colored accent bar */}
-              <View
-                style={[
-                  styles.detailAccent,
-                  { backgroundColor: emotionColors[selectedMemory.emotion] },
-                ]}
-              />
-              <View style={styles.detailContent}>
-                {selectedMemory.photoUri && (
-                  <Image
-                    source={{ uri: selectedMemory.photoUri }}
-                    style={styles.detailPhoto}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={styles.detailHeader}>
-                  <Text
-                    style={[
-                      styles.detailStar,
-                      {
-                        color: emotionColors[selectedMemory.emotion],
-                        fontSize: 20 + selectedMemory.importance * 4,
-                      },
-                    ]}
-                  >
-                    ★
-                  </Text>
-                  <View style={styles.detailTitleWrap}>
-                    <Text style={styles.detailTitle}>{selectedMemory.title}</Text>
-                    <Text style={styles.detailMeta}>
-                      {selectedMemory.date.toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}{' '}
-                      · {selectedMemory.category}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.detailDescription}>
-                  {selectedMemory.description}
+            {/* Galaxy */}
+            {memories.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>✦</Text>
+                <Text style={styles.emptyText}>Your sky awaits</Text>
+                <Text style={styles.emptySubtext}>
+                  Add memories to watch your galaxy come alive
                 </Text>
-                <View style={styles.detailFooter}>
+              </View>
+            ) : (
+              <View style={styles.galaxyContainer}>
+                <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} />
+              </View>
+            )}
+
+            {/* Legend */}
+            <View style={styles.legend}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {Object.entries(emotionColors).map(([emotion, color]) => (
+                  <View key={emotion} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: color }]} />
+                    <Text style={styles.legendLabel}>{emotion}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </SafeAreaView>
+
+          {/* Memory detail popup */}
+          <Modal
+            visible={selectedMemory !== null}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setSelectedMemory(null)}
+          >
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => setSelectedMemory(null)}
+            >
+              {selectedMemory && (
+                <View style={styles.detailCard}>
                   <View
                     style={[
-                      styles.detailEmotionBadge,
-                      { backgroundColor: emotionColors[selectedMemory.emotion] + '20' },
+                      styles.detailAccent,
+                      { backgroundColor: emotionColors[selectedMemory.emotion] },
                     ]}
-                  >
-                    <Text
-                      style={[
-                        styles.detailEmotionText,
-                        { color: emotionColors[selectedMemory.emotion] },
-                      ]}
-                    >
-                      {selectedMemory.emotion}
+                  />
+                  <View style={styles.detailContent}>
+                    {selectedMemory.photoUri && (
+                      <Image
+                        source={{ uri: selectedMemory.photoUri }}
+                        style={styles.detailPhoto}
+                        resizeMode="cover"
+                      />
+                    )}
+                    <View style={styles.detailHeader}>
+                      <Text
+                        style={[
+                          styles.detailStar,
+                          {
+                            color: emotionColors[selectedMemory.emotion],
+                            fontSize: 20 + selectedMemory.importance * 4,
+                          },
+                        ]}
+                      >
+                        ★
+                      </Text>
+                      <View style={styles.detailTitleWrap}>
+                        <Text style={styles.detailTitle}>{selectedMemory.title}</Text>
+                        <Text style={styles.detailMeta}>
+                          {selectedMemory.date.toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}{' '}
+                          · {selectedMemory.category}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.detailDescription}>
+                      {selectedMemory.description}
                     </Text>
+                    <View style={styles.detailFooter}>
+                      <View
+                        style={[
+                          styles.detailEmotionBadge,
+                          { backgroundColor: emotionColors[selectedMemory.emotion] + '20' },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.detailEmotionText,
+                            { color: emotionColors[selectedMemory.emotion] },
+                          ]}
+                        >
+                          {selectedMemory.emotion}
+                        </Text>
+                      </View>
+                      {selectedMemory.location && (
+                        <Text style={styles.detailLocation}>
+                          📍 {selectedMemory.location}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                  {selectedMemory.location && (
-                    <Text style={styles.detailLocation}>
-                      📍 {selectedMemory.location}
-                    </Text>
-                  )}
+                  <Text style={styles.detailHint}>tap anywhere to close</Text>
                 </View>
-              </View>
-              <Text style={styles.detailHint}>tap anywhere to close</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </Modal>
-    </View>
+              )}
+            </TouchableOpacity>
+          </Modal>
+        </>
+      )}
+    </GalaxyShareCapture>
   );
 }
 
@@ -186,7 +175,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  backButton: {
+  headerButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -202,9 +190,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: {
+  headerButtonText: {
     fontSize: 18,
     color: colors.textPrimary,
+  },
+  headerSpacer: {
+    width: 36,
   },
   title: {
     fontSize: 18,
@@ -213,24 +204,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  memoryCount: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  memoryCountText: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
-  // Galaxy
   galaxyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  // Empty
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -251,7 +230,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 8,
   },
-  // Legend
   legend: {
     paddingHorizontal: 16,
     paddingBottom: 12,
@@ -272,7 +250,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textTransform: 'capitalize',
   },
-  // Detail modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 5, 16, 0.85)',

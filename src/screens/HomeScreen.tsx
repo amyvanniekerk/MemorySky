@@ -14,9 +14,9 @@ import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
-import EmptyState from '../components/EmptyState';
-import MemoryCard from '../components/MemoryCard';
-import MemoryFormModal from '../components/MemoryFormModal';
+import EmptyState from '../components/memory/EmptyState';
+import MemoryCard from '../components/memory/MemoryCard';
+import MemoryFormModal from '../components/memory/MemoryFormModal';
 
 const SAMPLE_MEMORIES: Memory[] = [
   { id: '1', title: 'Graduated university', date: new Date('2020-06-15'), description: 'Walked across the stage and felt like I could take on the world. Four years of late nights finally paid off.', emotion: 'excited', category: 'milestone', importance: 5 },

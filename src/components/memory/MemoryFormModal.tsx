@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { Memory, EmotionType, CategoryType, ImportanceLevel } from '../types/Memory';
-import { colors, emotionColors } from '../theme/colors';
+import { Memory, EmotionType, CategoryType, ImportanceLevel } from '../../types/Memory';
+import { colors, emotionColors } from '../../theme/colors';
 
 const EMOTIONS: { type: EmotionType; label: string; color: string }[] = [
   { type: 'happy', label: 'Happy', color: emotionColors.happy },
