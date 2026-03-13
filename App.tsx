@@ -15,7 +15,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }} initialRouteName="Galaxy">
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Galaxy" component={GalaxyScreen} />
           </Stack.Navigator>

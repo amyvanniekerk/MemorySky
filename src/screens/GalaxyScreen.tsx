@@ -47,9 +47,9 @@ export default function GalaxyScreen({ navigation }: Props) {
               {!isCapturing ? (
                 <TouchableOpacity
                   style={styles.headerButton}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => navigation.navigate('Home')}
                 >
-                  <Text style={styles.headerButtonText}>←</Text>
+                  <Text style={styles.headerButtonText}>⌂</Text>
                 </TouchableOpacity>
               ) : <View style={styles.headerSpacer} />}
               <Text style={styles.title}>Your Galaxy</Text>

@@ -75,7 +75,7 @@ export default function HomeScreen({ navigation }: Props) {
         {memories.length > 0 && (
           <TouchableOpacity
             style={styles.galaxyButton}
-            onPress={() => navigation.navigate('Galaxy')}
+            onPress={() => navigation.goBack()}
           >
             <Text style={styles.galaxyButtonText}>✦</Text>
           </TouchableOpacity>
