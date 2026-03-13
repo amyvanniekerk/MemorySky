@@ -27,14 +27,14 @@ function generateBackgroundStars(count: number) {
     stars.push({
       x: Math.random() * BG_FIELD + BG_OFFSET,
       y: Math.random() * BG_FIELD + BG_OFFSET,
-      size: Math.random() * 1.5 + 0.5,
-      opacity: Math.random() * 0.5 + 0.1,
+      size: Math.random() * 2.5 + 0.5,
+      opacity: Math.random() * 0.6 + 0.2,
     });
   }
   return stars;
 }
 
-const BG_STARS = generateBackgroundStars(200);
+const BG_STARS = generateBackgroundStars(400);
 
 interface GalaxyViewProps {
   memories: Memory[];
