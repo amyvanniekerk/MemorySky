@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,12 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  Image,
   Platform,
+  Alert,
 } from 'react-native';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/Navigation';
@@ -21,9 +25,25 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 export default function GalaxyScreen({ navigation }: Props) {
   const { memories } = useMemoryStorage();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const galaxyRef = useRef<any>(null);
+
+  const shareGalaxy = useCallback(async () => {
+    try {
+      const uri = await captureRef(galaxyRef, {
+        format: 'png',
+        quality: 1,
+      });
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: 'Share your galaxy',
+      });
+    } catch (e) {
+      Alert.alert('Error', 'Could not capture galaxy');
+    }
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={galaxyRef} collapsable={false}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header — minimal, floating over galaxy */}
         <View style={styles.header}>
@@ -34,7 +54,12 @@ export default function GalaxyScreen({ navigation }: Props) {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Your Galaxy</Text>
-          <View style={{ width: 36 }} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={shareGalaxy}
+          >
+            <Text style={styles.backText}>↗</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Galaxy */}
@@ -87,6 +112,13 @@ export default function GalaxyScreen({ navigation }: Props) {
                 ]}
               />
               <View style={styles.detailContent}>
+                {selectedMemory.photoUri && (
+                  <Image
+                    source={{ uri: selectedMemory.photoUri }}
+                    style={styles.detailPhoto}
+                    resizeMode="cover"
+                  />
+                )}
                 <View style={styles.detailHeader}>
                   <Text
                     style={[
@@ -273,6 +305,12 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     padding: 24,
+  },
+  detailPhoto: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   detailHeader: {
     flexDirection: 'row',
