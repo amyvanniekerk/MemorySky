@@ -379,8 +379,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
+    height: 70,
     backgroundColor: 'rgba(11,14,31,0.75)',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   detailPhotoTitle: {
     position: 'absolute',
