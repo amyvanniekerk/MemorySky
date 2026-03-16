@@ -1,4 +1,7 @@
 export type RootStackParamList = {
-  Home: undefined;
+  Login: undefined;
+  Home: { capturedPhotoUri?: string } | undefined;
   Galaxy: undefined;
+  Capture: undefined;
+  Profile: undefined;
 };

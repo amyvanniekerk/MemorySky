@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +16,7 @@ import useMemoryStorage from '../hooks/useMemoryStorage';
 import EmptyState from '../components/memory/EmptyState';
 import MemoryCard from '../components/memory/MemoryCard';
 import MemoryFormModal from '../components/memory/MemoryFormModal';
+import ProfileAvatar from '../components/shared/ProfileAvatar';
 
 const SAMPLE_MEMORIES: Memory[] = [
   { id: '1', title: 'Graduated university', date: new Date('2020-06-15'), description: 'Walked across the stage and felt like I could take on the world. Four years of late nights finally paid off.', emotion: 'excited', category: 'milestone', importance: 5 },
@@ -31,12 +31,26 @@ const SAMPLE_MEMORIES: Memory[] = [
   { id: '10', title: 'Ran my first 10K', date: new Date('2024-04-07'), description: 'Didn\'t think I could do it. Legs were screaming by mile 4 but I crossed that finish line.', emotion: 'happy', category: 'milestone', importance: 3, location: 'Central Park, NYC' },
 ];
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'> & {
+  userName: string;
+};
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen({ navigation, route, userName }: Props) {
   const { memories, save } = useMemoryStorage();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null);
+  const [initialPhotoUri, setInitialPhotoUri] = useState<string | undefined>();
+
+  // Handle captured photo from CaptureScreen or notification
+  useEffect(() => {
+    const capturedPhotoUri = route.params?.capturedPhotoUri;
+    if (capturedPhotoUri) {
+      setEditingMemory(null);
+      setInitialPhotoUri(capturedPhotoUri);
+      setModalVisible(true);
+      navigation.setParams({ capturedPhotoUri: undefined });
+    }
+  }, [route.params?.capturedPhotoUri]);
 
   const handleLoadSamples = () => save(SAMPLE_MEMORIES);
 
@@ -68,18 +82,25 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.appTitle}>MemorySky</Text>
           <Text style={styles.subtitle}>Your galaxy of memories</Text>
         </View>
-        {memories.length > 0 && (
-          <TouchableOpacity
-            style={styles.galaxyButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.galaxyButtonText}>✦</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerRight}>
+          {memories.length > 0 && (
+            <TouchableOpacity
+              style={styles.galaxyButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.galaxyButtonText}>✦</Text>
+            </TouchableOpacity>
+          )}
+          <ProfileAvatar
+            name={userName}
+            size={36}
+            onPress={() => navigation.navigate('Profile')}
+          />
+        </View>
       </View>
 
       {memories.length === 0 ? (
@@ -100,6 +121,13 @@ export default function HomeScreen({ navigation }: Props) {
         />
       )}
 
+      <TouchableOpacity
+        style={styles.captureButton}
+        onPress={() => navigation.navigate('Capture')}
+      >
+        <Text style={styles.captureButtonText}>📷</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.addButton} onPress={handleOpenNew}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
@@ -107,8 +135,15 @@ export default function HomeScreen({ navigation }: Props) {
       <MemoryFormModal
         visible={modalVisible}
         editingMemory={editingMemory}
-        onClose={() => setModalVisible(false)}
-        onSave={handleSaveMemory}
+        initialPhotoUri={initialPhotoUri}
+        onClose={() => {
+          setModalVisible(false);
+          setInitialPhotoUri(undefined);
+        }}
+        onSave={(data) => {
+          handleSaveMemory(data);
+          setInitialPhotoUri(undefined);
+        }}
       />
     </SafeAreaView>
   );
@@ -126,6 +161,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 12,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   galaxyButton: {
     width: 40,
@@ -155,6 +198,22 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 16,
     paddingBottom: 100,
+  },
+  captureButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 24,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureButtonText: {
+    fontSize: 20,
   },
   addButton: {
     position: 'absolute',

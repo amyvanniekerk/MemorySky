@@ -20,16 +20,9 @@ import useMemoryStorage from '../hooks/useMemoryStorage';
 import InteractiveGalaxy from '../components/galaxy/InteractiveGalaxy';
 import GalaxyShareCapture from '../components/galaxy/GalaxyShareCapture';
 import GalaxyToast from '../components/galaxy/GalaxyToast';
+import StarField from '../components/shared/StarField';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
-
-const CARD_STARS = Array.from({ length: 50 }, (_, i) => ({
-  id: i,
-  left: `${Math.floor(Math.random() * 96) + 2}%` as const,
-  top: `${Math.floor(Math.random() * 96) + 2}%` as const,
-  size: Math.random() < 0.2 ? 3 : Math.random() < 0.5 ? 2 : 1.2,
-  opacity: Math.random() * 0.55 + 0.25,
-}));
 
 export default function GalaxyScreen({ navigation }: Props) {
   const { memories, reload } = useMemoryStorage();
@@ -213,23 +206,7 @@ export default function GalaxyScreen({ navigation }: Props) {
                     ) : null}
                   </View>
                   {/* Starry night overlay */}
-                  <View style={styles.starsLayer} pointerEvents="none">
-                    {CARD_STARS.map((s) => (
-                      <View
-                        key={s.id}
-                        style={{
-                          position: 'absolute',
-                          left: s.left,
-                          top: s.top,
-                          width: s.size,
-                          height: s.size,
-                          borderRadius: s.size,
-                          backgroundColor: '#fff',
-                          opacity: s.opacity,
-                        }}
-                      />
-                    ))}
-                  </View>
+                  <StarField count={50} />
                 </View>
               )}
             </TouchableOpacity>
@@ -352,14 +329,6 @@ const styles = StyleSheet.create({
         elevation: 16,
       },
     }),
-  },
-  starsLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
   },
   detailAccent: {
     height: 3,

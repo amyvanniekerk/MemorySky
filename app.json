@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.amyvanniekerk.MemorySky"
+      "bundleIdentifier": "com.amyvanniekerk.MemorySky",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MemorySky needs your camera to capture daily moments."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +32,20 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7b4bbf"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MemorySky needs your camera to capture daily moments."
+        }
+      ]
     ]
   }
 }

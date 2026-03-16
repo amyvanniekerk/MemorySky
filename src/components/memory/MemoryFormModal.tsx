@@ -46,11 +46,12 @@ const CATEGORIES: { type: CategoryType; label: string }[] = [
 interface MemoryFormModalProps {
   visible: boolean;
   editingMemory: Memory | null;
+  initialPhotoUri?: string;
   onClose: () => void;
   onSave: (memory: Omit<Memory, 'id'> & { id?: string }) => void;
 }
 
-export default function MemoryFormModal({ visible, editingMemory, onClose, onSave }: MemoryFormModalProps) {
+export default function MemoryFormModal({ visible, editingMemory, initialPhotoUri, onClose, onSave }: MemoryFormModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [emotion, setEmotion] = useState<EmotionType>('happy');
@@ -86,13 +87,13 @@ export default function MemoryFormModal({ visible, editingMemory, onClose, onSav
       setEmotion('happy');
       setCategory('everyday');
       setImportance(3);
-      setPhotoUri(undefined);
+      setPhotoUri(initialPhotoUri || undefined);
       setLocation('');
       setHidden(false);
       setDate(new Date());
-      setShowDetails(false);
+      setShowDetails(!!initialPhotoUri);
     }
-  }, [editingMemory, visible]);
+  }, [editingMemory, visible, initialPhotoUri]);
 
   const pickPhoto = async () => {
     try {
