@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
@@ -8,7 +8,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootStackParamList } from './src/types/Navigation';
 import useUserProfile from './src/hooks/useUserProfile';
 import useDailyCapture from './src/hooks/useDailyCapture';
-import LoginScreen from './src/screens/LoginScreen';
+import { getNebulaBlobColors } from './src/utils/birthdayColors';
+import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GalaxyScreen from './src/screens/GalaxyScreen';
 import CaptureScreen from './src/screens/CaptureScreen';
@@ -20,6 +21,11 @@ const navigationRef = createNavigationContainerRef<RootStackParamList>();
 export default function App() {
   const { profile, loading, createProfile, updateDailyCapture, logout } = useUserProfile();
   useDailyCapture(navigationRef);
+
+  const nebulaColors = useMemo(() => {
+    if (!profile?.birthday) return undefined;
+    return getNebulaBlobColors(new Date(profile.birthday));
+  }, [profile?.birthday]);
 
   if (loading) {
     return (
@@ -33,7 +39,7 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="light" />
-        <LoginScreen onLogin={createProfile} />
+        <SignupScreen onComplete={createProfile} />
       </GestureHandlerRootView>
     );
   }
@@ -46,7 +52,9 @@ export default function App() {
             <Stack.Screen name="Home">
               {(props) => <HomeScreen {...props} userName={profile.name} />}
             </Stack.Screen>
-            <Stack.Screen name="Galaxy" component={GalaxyScreen} />
+            <Stack.Screen name="Galaxy">
+              {(props) => <GalaxyScreen {...props} nebulaColors={nebulaColors} />}
+            </Stack.Screen>
             <Stack.Screen name="Capture" component={CaptureScreen} />
             <Stack.Screen name="Profile">
               {(props) => (

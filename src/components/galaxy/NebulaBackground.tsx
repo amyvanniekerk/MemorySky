@@ -3,11 +3,17 @@ import { View, Animated, StyleSheet, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
+const DEFAULT_COLORS = ['#6b2fa0', '#c060d0', '#4ac8b0', '#3a2368', '#8b5fbf', '#60d0d0'];
+
 interface Blob {
   x: Animated.Value;
   y: Animated.Value;
   color: string;
   size: number;
+}
+
+interface NebulaBackgroundProps {
+  blobColors?: string[];
 }
 
 function createBlob(color: string, size: number, startX: number, startY: number): Blob {
@@ -39,15 +45,27 @@ function animateBlob(blob: Blob) {
   loop();
 }
 
-export default function NebulaBackground() {
-  const blobs = useRef<Blob[]>([
-    createBlob('#6b2fa0', width * 0.9, width * 0.1, height * 0.05),
-    createBlob('#c060d0', width * 0.7, width * 0.3, height * 0.2),
-    createBlob('#4ac8b0', width * 0.8, -width * 0.1, height * 0.4),
-    createBlob('#3a2368', width * 1.0, width * 0.2, height * 0.6),
-    createBlob('#8b5fbf', width * 0.6, width * 0.0, height * 0.1),
-    createBlob('#60d0d0', width * 0.5, width * 0.4, height * 0.5),
-  ]).current;
+const SIZES = [width * 0.9, width * 0.7, width * 0.8, width * 1.0, width * 0.6, width * 0.5];
+const POSITIONS: [number, number][] = [
+  [width * 0.1, height * 0.05],
+  [width * 0.3, height * 0.2],
+  [-width * 0.1, height * 0.4],
+  [width * 0.2, height * 0.6],
+  [width * 0.0, height * 0.1],
+  [width * 0.4, height * 0.5],
+];
+
+export default function NebulaBackground({ blobColors }: NebulaBackgroundProps) {
+  const palette = blobColors ?? DEFAULT_COLORS;
+
+  const blobs = useRef<Blob[]>(
+    palette.map((color, i) => createBlob(
+      color,
+      SIZES[i % SIZES.length],
+      POSITIONS[i % POSITIONS.length][0],
+      POSITIONS[i % POSITIONS.length][1],
+    ))
+  ).current;
 
   useEffect(() => {
     blobs.forEach(animateBlob);
@@ -80,7 +98,11 @@ export default function NebulaBackground() {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     overflow: 'hidden',
   },
   blob: {
