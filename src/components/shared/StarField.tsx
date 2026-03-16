@@ -1,15 +1,23 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, DimensionValue } from 'react-native';
 
 interface StarFieldProps {
   count?: number;
 }
 
-const generateStars = (count: number) =>
+interface StarData {
+  id: number;
+  left: DimensionValue;
+  top: DimensionValue;
+  size: number;
+  opacity: number;
+}
+
+const generateStars = (count: number): StarData[] =>
   Array.from({ length: count }, (_, i) => ({
     id: i,
-    left: `${Math.floor(Math.random() * 96) + 2}%`,
-    top: `${Math.floor(Math.random() * 96) + 2}%`,
+    left: `${Math.floor(Math.random() * 96) + 2}%` as DimensionValue,
+    top: `${Math.floor(Math.random() * 96) + 2}%` as DimensionValue,
     size: Math.random() < 0.2 ? 3 : Math.random() < 0.5 ? 2 : 1.2,
     opacity: Math.random() * 0.55 + 0.2,
   }));

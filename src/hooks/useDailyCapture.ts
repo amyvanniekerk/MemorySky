@@ -11,7 +11,7 @@ import {
 export default function useDailyCapture(
   navigationRef: NavigationContainerRefWithCurrent<RootStackParamList>,
 ) {
-  const responseListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<ReturnType<typeof Notifications.addNotificationResponseReceivedListener> | null>(null);
 
   useEffect(() => {
     setupNotificationHandler();
@@ -32,7 +32,7 @@ export default function useDailyCapture(
 
     return () => {
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, [navigationRef]);
