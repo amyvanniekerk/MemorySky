@@ -63,7 +63,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
   });
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'This will clear your profile. Your memories will be kept.', [
+    Alert.alert('Sign Out', 'This will remove your profile. Your memories will be kept.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: onLogout },
     ]);
