@@ -54,12 +54,20 @@ export default function App() {
     await logout();
   };
 
-  // Not authenticated — show login or signup
-  if (!loading && !session) {
-    return (
-      <GestureHandlerRootView style={styles.root}>
-        <StatusBar style="light" />
-        {authView === 'login' ? (
+  // Determine what to show
+  const showLoading = loading;
+  const showAuth = !loading && !session;
+  const showOnboarding = !loading && session && !profile;
+  const showApp = !loading && session && !!profile;
+
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      <StatusBar style="light" />
+
+      {showLoading && <LoadingScreen />}
+
+      {showAuth && (
+        authView === 'login' ? (
           <LoginScreen
             onSignIn={signIn}
             onSwitchToSignup={() => setAuthView('signup')}
@@ -70,33 +78,19 @@ export default function App() {
             onComplete={createProfile}
             onSwitchToLogin={() => setAuthView('login')}
           />
-        )}
-      </GestureHandlerRootView>
-    );
-  }
+        )
+      )}
 
-  // Authenticated but no profile yet — skip email step, go straight to name
-  if (!loading && session && !profile) {
-    return (
-      <GestureHandlerRootView style={styles.root}>
-        <StatusBar style="light" />
+      {showOnboarding && (
         <SignupScreen
           onSignUp={signUp}
           onComplete={createProfile}
           onSwitchToLogin={() => setAuthView('login')}
           startStep="name"
         />
-      </GestureHandlerRootView>
-    );
-  }
+      )}
 
-  return (
-    <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="light" />
-
-      {loading && <LoadingScreen />}
-
-      {!loading && profile && (
+      {showApp && (
         <SafeAreaProvider>
           <NavigationContainer ref={navigationRef} theme={navTheme as any}>
             <Stack.Navigator

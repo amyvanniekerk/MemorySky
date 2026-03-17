@@ -22,6 +22,7 @@ export default function SignupStepEmail({ onNext, onLogin }: SignupStepEmailProp
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleNext = async () => {
     setError('');
@@ -42,8 +43,32 @@ export default function SignupStepEmail({ onNext, onLogin }: SignupStepEmailProp
     setBusy(true);
     const err = await onNext(email.trim().toLowerCase(), password);
     setBusy(false);
-    if (err) setError(err);
+    if (err) {
+      setError(err);
+    } else {
+      setEmailSent(true);
+    }
   };
+
+  if (emailSent) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.emoji}>✉</Text>
+        <Text style={styles.title}>Check your email</Text>
+        <Text style={styles.subtitle}>
+          We sent a confirmation link to
+        </Text>
+        <Text style={styles.emailHighlight}>{email}</Text>
+        <Text style={styles.hint}>
+          Confirm your email, then come back and log in.
+        </Text>
+
+        <TouchableOpacity style={styles.button} onPress={onLogin}>
+          <Text style={styles.buttonText}>Go to login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -178,5 +203,17 @@ const styles = StyleSheet.create({
   loginTextBold: {
     color: colors.accent,
     fontWeight: '600',
+  },
+  emailHighlight: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.accent,
+    marginBottom: 8,
+  },
+  hint: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center' as const,
+    marginBottom: 32,
   },
 });

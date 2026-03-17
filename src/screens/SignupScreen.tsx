@@ -44,7 +44,6 @@ export default function SignupScreen({ onSignUp, onComplete, onSwitchToLogin, st
   const handleEmail = async (email: string, password: string): Promise<string | null> => {
     const { error } = await onSignUp(email, password);
     if (error) return error.message;
-    animateStep('name');
     return null;
   };
 
