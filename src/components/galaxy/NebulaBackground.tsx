@@ -3,7 +3,7 @@ import { View, Animated, StyleSheet, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-const DEFAULT_COLORS = ['#6b2fa0', '#c060d0', '#4ac8b0', '#3a2368', '#8b5fbf', '#60d0d0'];
+const DEFAULT_COLORS = ['#6b2fa0', '#c060d0', '#4ac8b0'];
 
 interface Blob {
   x: Animated.Value;
@@ -30,40 +30,37 @@ function animateBlob(blob: Blob) {
     const to = base + (Math.random() - 0.5) * range;
     return Animated.timing(axis, {
       toValue: to,
-      duration: 8000 + Math.random() * 12000,
+      duration: 15000 + Math.random() * 15000,
       useNativeDriver: true,
     });
   };
 
   const loop = () => {
     Animated.parallel([
-      drift(blob.x, width * 0.3, (width - blob.size) * Math.random()),
-      drift(blob.y, height * 0.3, (height - blob.size) * Math.random()),
+      drift(blob.x, width * 0.2, (width - blob.size) * 0.5),
+      drift(blob.y, height * 0.2, (height - blob.size) * 0.5),
     ]).start(() => loop());
   };
 
   loop();
 }
 
-const SIZES = [width * 0.9, width * 0.7, width * 0.8, width * 1.0, width * 0.6, width * 0.5];
+const SIZES = [width * 1.2, width * 1.0, width * 0.9];
 const POSITIONS: [number, number][] = [
-  [width * 0.1, height * 0.05],
-  [width * 0.3, height * 0.2],
-  [-width * 0.1, height * 0.4],
-  [width * 0.2, height * 0.6],
-  [width * 0.0, height * 0.1],
-  [width * 0.4, height * 0.5],
+  [-width * 0.15, -height * 0.1],
+  [width * 0.2, height * 0.35],
+  [-width * 0.05, height * 0.6],
 ];
 
 export default function NebulaBackground({ blobColors }: NebulaBackgroundProps) {
-  const palette = blobColors ?? DEFAULT_COLORS;
+  const palette = (blobColors ?? DEFAULT_COLORS).slice(0, 3);
 
   const blobs = useRef<Blob[]>(
     palette.map((color, i) => createBlob(
       color,
-      SIZES[i % SIZES.length],
-      POSITIONS[i % POSITIONS.length][0],
-      POSITIONS[i % POSITIONS.length][1],
+      SIZES[i],
+      POSITIONS[i][0],
+      POSITIONS[i][1],
     ))
   ).current;
 
@@ -83,7 +80,7 @@ export default function NebulaBackground({ blobColors }: NebulaBackgroundProps) 
               height: blob.size,
               borderRadius: blob.size / 2,
               backgroundColor: blob.color,
-              opacity: 0.3,
+              opacity: 0.15,
               transform: [
                 { translateX: blob.x },
                 { translateY: blob.y },

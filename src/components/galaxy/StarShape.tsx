@@ -56,22 +56,64 @@ export default function StarShape({
     }
   }, []);
 
-  const touchSize = Math.max(star.size * 3, 24);
+  const glowSize = star.size * 3;
+  const coreSize = Math.max(star.size * 1.5, 20);
 
   return (
     <Animated.View
       style={[
         styles.starContainer,
         {
-          left: star.x - touchSize / 2,
-          top: star.y - touchSize / 2,
-          width: touchSize,
-          height: touchSize,
+          left: star.x - glowSize / 2,
+          top: star.y - glowSize / 2,
+          width: glowSize,
+          height: glowSize,
           opacity: fadeIn,
           transform: [{ scale: pulseAnim }],
         },
       ]}
+      pointerEvents="box-none"
     >
+      {/* Glow halo — not tappable */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: glowSize,
+          height: glowSize,
+          borderRadius: glowSize / 2,
+          backgroundColor: isHidden ? '#888' : color,
+          opacity: isHidden ? 0.05 : 0.1,
+        }}
+      />
+      {/* Star SVG — not tappable */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          ...Platform.select({
+            ios: {
+              shadowColor: isHidden ? '#888' : color,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: isHidden ? 0.3 : 0.9,
+              shadowRadius: star.size * (isHidden ? 1 : 2),
+            },
+          }),
+        }}
+      >
+        <Svg width={glowSize} height={glowSize} viewBox="0 0 100 100">
+          <Path
+            d="M50 0 C50 30, 70 50, 100 50 C70 50, 50 70, 50 100 C50 70, 30 50, 0 50 C30 50, 50 30, 50 0Z"
+            fill={isHidden ? '#666' : color}
+          />
+          <Path
+            d="M50 30 C50 42, 58 50, 70 50 C58 50, 50 58, 50 70 C50 58, 42 50, 30 50 C42 50, 50 42, 50 30Z"
+            fill="#ffffff"
+            opacity={isHidden ? 0.2 : 0.6}
+          />
+        </Svg>
+      </View>
+      {/* Tap target — only the core center */}
       <TapGestureHandler
         onHandlerStateChange={(e: any) => {
           if (e.nativeEvent.state === State.ACTIVE) {
@@ -83,7 +125,13 @@ export default function StarShape({
           }
         }}
       >
-        <Animated.View style={styles.starTouchArea}>
+        <Animated.View
+          style={{
+            width: coreSize,
+            height: coreSize,
+            borderRadius: coreSize / 2,
+          }}
+        >
           <PanGestureHandler
             activateAfterLongPress={300}
             onGestureEvent={(e: any) => onStarDragMove?.(e.nativeEvent.absoluteX, e.nativeEvent.absoluteY)}
@@ -93,45 +141,7 @@ export default function StarShape({
               }
             }}
           >
-            <Animated.View style={styles.starTouchArea}>
-              {/* Glow halo — dimmed for hidden */}
-              <View
-                style={{
-                  position: 'absolute',
-                  width: star.size * 3,
-                  height: star.size * 3,
-                  borderRadius: star.size * 1.5,
-                  backgroundColor: isHidden ? '#888' : color,
-                  opacity: isHidden ? 0.05 : 0.1,
-                }}
-              />
-              {/* 4-pointed star SVG */}
-              <View
-                style={{
-                  position: 'absolute',
-                  ...Platform.select({
-                    ios: {
-                      shadowColor: isHidden ? '#888' : color,
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: isHidden ? 0.3 : 0.9,
-                      shadowRadius: star.size * (isHidden ? 1 : 2),
-                    },
-                  }),
-                }}
-              >
-                <Svg width={star.size * 3} height={star.size * 3} viewBox="0 0 100 100">
-                  <Path
-                    d="M50 0 C50 30, 70 50, 100 50 C70 50, 50 70, 50 100 C50 70, 30 50, 0 50 C30 50, 50 30, 50 0Z"
-                    fill={isHidden ? '#666' : color}
-                  />
-                  <Path
-                    d="M50 30 C50 42, 58 50, 70 50 C58 50, 50 58, 50 70 C50 58, 42 50, 30 50 C42 50, 50 42, 50 30Z"
-                    fill="#ffffff"
-                    opacity={isHidden ? 0.2 : 0.6}
-                  />
-                </Svg>
-              </View>
-            </Animated.View>
+            <Animated.View style={{ width: coreSize, height: coreSize }} />
           </PanGestureHandler>
         </Animated.View>
       </TapGestureHandler>

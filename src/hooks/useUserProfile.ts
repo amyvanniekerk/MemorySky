@@ -58,8 +58,8 @@ export default function useUserProfile() {
       createdAt: new Date().toISOString(),
       dailyCaptureEnabled: false,
     };
-    await saveProfile(newProfile);
     await createBirthdayMemory(name, birthday);
+    await saveProfile(newProfile);
     return newProfile;
   }, [saveProfile, createBirthdayMemory]);
 

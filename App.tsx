@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootStackParamList } from './src/types/Navigation';
+import useAuth from './src/hooks/useAuth';
 import useUserProfile from './src/hooks/useUserProfile';
 import useDailyCapture from './src/hooks/useDailyCapture';
-import { getNebulaBlobColors } from './src/utils/birthdayColors';
+import LoadingScreen from './src/components/shared/LoadingScreen';
+import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GalaxyScreen from './src/screens/GalaxyScreen';
@@ -18,58 +20,119 @@ import ProfileScreen from './src/screens/ProfileScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
+const navTheme = {
+  dark: true,
+  colors: {
+    primary: '#c060d0',
+    background: '#050510',
+    card: '#050510',
+    text: '#fff',
+    border: '#050510',
+    notification: '#c060d0',
+  },
+  fonts: {
+    regular: { fontFamily: 'System', fontWeight: '400' as const },
+    medium: { fontFamily: 'System', fontWeight: '500' as const },
+    bold: { fontFamily: 'System', fontWeight: '700' as const },
+    heavy: { fontFamily: 'System', fontWeight: '800' as const },
+  },
+};
+
+type AuthView = 'login' | 'signup';
+
 export default function App() {
-  const { profile, loading, createProfile, updateDailyCapture, logout } = useUserProfile();
+  const { session, loading: authLoading, signUp, signIn, signOut } = useAuth();
+  const { profile, loading: profileLoading, createProfile, updateDailyCapture, logout } = useUserProfile();
   useDailyCapture(navigationRef);
 
-  const nebulaColors = useMemo(() => {
-    if (!profile?.birthday) return undefined;
-    return getNebulaBlobColors(new Date(profile.birthday));
-  }, [profile?.birthday]);
+  const [authView, setAuthView] = useState<AuthView>('signup');
 
-  if (loading) {
+  const loading = authLoading || profileLoading;
+
+  const handleLogout = async () => {
+    await signOut();
+    await logout();
+  };
+
+  // Not authenticated — show login or signup
+  if (!loading && !session) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#050510', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator color="#c060d0" size="large" />
-      </View>
+      <GestureHandlerRootView style={styles.root}>
+        <StatusBar style="light" />
+        {authView === 'login' ? (
+          <LoginScreen
+            onSignIn={signIn}
+            onSwitchToSignup={() => setAuthView('signup')}
+          />
+        ) : (
+          <SignupScreen
+            onSignUp={signUp}
+            onComplete={createProfile}
+            onSwitchToLogin={() => setAuthView('login')}
+          />
+        )}
+      </GestureHandlerRootView>
     );
   }
 
-  if (!profile) {
+  // Authenticated but no profile yet — skip email step, go straight to name
+  if (!loading && session && !profile) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={styles.root}>
         <StatusBar style="light" />
-        <SignupScreen onComplete={createProfile} />
+        <SignupScreen
+          onSignUp={signUp}
+          onComplete={createProfile}
+          onSwitchToLogin={() => setAuthView('login')}
+          startStep="name"
+        />
       </GestureHandlerRootView>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <NavigationContainer ref={navigationRef}>
-          <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }} initialRouteName="Galaxy">
-            <Stack.Screen name="Home">
-              {(props) => <HomeScreen {...props} userName={profile.name} />}
-            </Stack.Screen>
-            <Stack.Screen name="Galaxy">
-              {(props) => <GalaxyScreen {...props} nebulaColors={nebulaColors} />}
-            </Stack.Screen>
-            <Stack.Screen name="Capture" component={CaptureScreen} />
-            <Stack.Screen name="Profile">
-              {(props) => (
-                <ProfileScreen
-                  {...props}
-                  profile={profile}
-                  onUpdateDailyCapture={updateDailyCapture}
-                  onLogout={logout}
-                />
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-          <StatusBar style="light" />
-        </NavigationContainer>
-      </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <StatusBar style="light" />
+
+      {loading && <LoadingScreen />}
+
+      {!loading && profile && (
+        <SafeAreaProvider>
+          <NavigationContainer ref={navigationRef} theme={navTheme as any}>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                contentStyle: styles.root,
+              }}
+              initialRouteName="Galaxy"
+            >
+              <Stack.Screen name="Home">
+                {(props) => <HomeScreen {...props} userName={profile.name} />}
+              </Stack.Screen>
+              <Stack.Screen name="Galaxy" component={GalaxyScreen} />
+              <Stack.Screen name="Capture" component={CaptureScreen} />
+              <Stack.Screen name="Profile">
+                {(props) => (
+                  <ProfileScreen
+                    {...props}
+                    profile={profile}
+                    onUpdateDailyCapture={updateDailyCapture}
+                    onLogout={handleLogout}
+                  />
+                )}
+              </Stack.Screen>
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      )}
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#050510',
+  },
+});

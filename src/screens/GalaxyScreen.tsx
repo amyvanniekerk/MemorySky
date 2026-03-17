@@ -20,14 +20,11 @@ import useMemoryStorage from '../hooks/useMemoryStorage';
 import InteractiveGalaxy from '../components/galaxy/InteractiveGalaxy';
 import GalaxyShareCapture from '../components/galaxy/GalaxyShareCapture';
 import GalaxyToast from '../components/galaxy/GalaxyToast';
-import NebulaBackground from '../components/galaxy/NebulaBackground';
 import StarField from '../components/shared/StarField';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'> & {
-  nebulaColors?: string[];
-};
+type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
-export default function GalaxyScreen({ navigation, nebulaColors }: Props) {
+export default function GalaxyScreen({ navigation }: Props) {
   const { memories, reload } = useMemoryStorage();
 
   useFocusEffect(
@@ -53,7 +50,6 @@ export default function GalaxyScreen({ navigation, nebulaColors }: Props) {
     <GalaxyShareCapture style={styles.container}>
       {(isCapturing, onShare) => (
         <>
-          <NebulaBackground blobColors={nebulaColors} />
           <SafeAreaView style={styles.safeArea}>
             {/* Header */}
             <View style={styles.header}>

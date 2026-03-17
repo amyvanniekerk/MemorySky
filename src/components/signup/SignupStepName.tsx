@@ -31,7 +31,9 @@ export default function SignupStepName({ onNext }: SignupStepNameProps) {
         placeholderTextColor={colors.textSubtle}
         value={name}
         onChangeText={setName}
-        autoFocus
+        autoCorrect={false}
+        spellCheck={false}
+        autoCapitalize="words"
         returnKeyType="next"
         onSubmitEditing={handleNext}
       />

@@ -81,7 +81,7 @@ export default function SignupStepDone({ name, birthday, onEnter }: SignupStepDo
       <Animated.Text style={[styles.star, { opacity: starPulse }]}>★</Animated.Text>
       <Text style={styles.title}>Your galaxy is ready, {name}</Text>
       <Text style={styles.subtitle}>
-        Your first star was born on {formattedDate}
+        Your first star was created on {formattedDate}
       </Text>
       <Text style={styles.hint}>
         It now shines at the heart of your nebula

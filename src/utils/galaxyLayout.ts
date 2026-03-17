@@ -25,6 +25,8 @@ export interface StarPosition {
  * - Angle = category cluster + small random offset
  * - Size = importance level
  */
+const BIRTHDAY_MEMORY_ID = 'birthday-star';
+
 export function calculateStarPositions(
   memories: Memory[],
   centerX: number,
@@ -33,8 +35,26 @@ export function calculateStarPositions(
 ): StarPosition[] {
   if (memories.length === 0) return [];
 
-  // Sort by date to determine time range
-  const sorted = [...memories].sort(
+  // Separate birthday star — it gets a fixed position at the galaxy center
+  const birthdayStar = memories.find((m) => m.id === BIRTHDAY_MEMORY_ID);
+  const regularMemories = memories.filter((m) => m.id !== BIRTHDAY_MEMORY_ID);
+
+  const results: StarPosition[] = [];
+
+  // Place birthday star at the very center
+  if (birthdayStar) {
+    results.push({
+      memory: birthdayStar,
+      x: centerX,
+      y: centerY,
+      size: 2 + birthdayStar.importance * 1.5,
+    });
+  }
+
+  if (regularMemories.length === 0) return results;
+
+  // Sort by date to determine time range (excluding birthday)
+  const sorted = [...regularMemories].sort(
     (a, b) => a.date.getTime() - b.date.getTime()
   );
 
@@ -42,29 +62,28 @@ export function calculateStarPositions(
   const newest = sorted[sorted.length - 1].date.getTime();
   const timeRange = newest - oldest || 1; // avoid division by zero
 
-  return memories.map((memory) => {
+  for (const memory of regularMemories) {
     // Normalize time: 0 (oldest) to 1 (newest)
     const timeNorm = (memory.date.getTime() - oldest) / timeRange;
 
     // Newer memories closer to center, older farther out
-    // Use sqrt for more even distribution
     const radius = (1 - timeNorm) * maxRadius * 0.85 + maxRadius * 0.08;
 
     // Spiral: base angle from category + time-based rotation
     const baseAngle = CATEGORY_ANGLES[memory.category];
-    const spiralTwist = timeNorm * Math.PI * 0.8; // gentle twist within category arm
-    // Deterministic offset based on id to prevent overlap
+    const spiralTwist = timeNorm * Math.PI * 0.8;
     const idOffset = hashString(memory.id) * 1.2 - 0.6;
     const angle = baseAngle + spiralTwist + idOffset;
 
     const x = centerX + Math.cos(angle) * radius;
     const y = centerY + Math.sin(angle) * radius;
 
-    // Star size based on importance (2 to 7)
     const size = 2 + memory.importance * 1;
 
-    return { memory, x, y, size };
-  });
+    results.push({ memory, x, y, size });
+  }
+
+  return results;
 }
 
 // Simple string hash for deterministic offsets
