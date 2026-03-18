@@ -4,11 +4,10 @@ import { colors } from '../../theme/colors';
 
 interface DailyCaptureToggleProps {
   enabled: boolean;
-  nextCaptureTime: Date | null;
   onToggle: (value: boolean) => void;
 }
 
-export default function DailyCaptureToggle({ enabled, nextCaptureTime, onToggle }: DailyCaptureToggleProps) {
+export default function DailyCaptureToggle({ enabled, onToggle }: DailyCaptureToggleProps) {
   return (
     <View style={styles.row}>
       <View style={styles.info}>
@@ -16,15 +15,6 @@ export default function DailyCaptureToggle({ enabled, nextCaptureTime, onToggle 
         <Text style={styles.description}>
           Get a notification at a random time each day to capture a moment
         </Text>
-        {enabled && nextCaptureTime && (
-          <Text style={styles.nextCapture}>
-            Next: {nextCaptureTime.toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })}
-          </Text>
-        )}
       </View>
       <Switch
         value={enabled}
@@ -61,11 +51,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 18,
-  },
-  nextCapture: {
-    fontSize: 12,
-    color: colors.teal,
-    marginTop: 6,
-    fontWeight: '500',
   },
 });

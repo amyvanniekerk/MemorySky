@@ -165,6 +165,24 @@ export default function MemoryFormModal({ visible, editingMemory, initialPhotoUr
             </TouchableOpacity>
           </View>
 
+          {/* Photo — always at top */}
+          {photoUri ? (
+            <View style={styles.topPhotoContainer}>
+              <Image source={{ uri: photoUri }} style={styles.topPhoto} />
+              <TouchableOpacity
+                style={styles.topPhotoRemove}
+                onPress={() => setPhotoUri(undefined)}
+              >
+                <Text style={styles.photoRemoveText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.topPhotoPicker} onPress={pickPhoto}>
+              <Text style={styles.topPhotoPickerIcon}>📷</Text>
+              <Text style={styles.topPhotoPickerText}>Add a photo</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Title — large, prominent */}
           <TextInput
             style={styles.titleInput}
@@ -318,24 +336,6 @@ export default function MemoryFormModal({ visible, editingMemory, initialPhotoUr
                 </Text>
               </View>
 
-              {/* Photo */}
-              <Text style={styles.detailLabel}>Photo</Text>
-              {photoUri ? (
-                <View style={styles.photoPreviewContainer}>
-                  <Image source={{ uri: photoUri }} style={styles.photoPreview} />
-                  <TouchableOpacity
-                    style={styles.photoRemove}
-                    onPress={() => setPhotoUri(undefined)}
-                  >
-                    <Text style={styles.photoRemoveText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity style={styles.photoPickerButton} onPress={pickPhoto}>
-                  <Text style={styles.photoPickerIcon}>📷</Text>
-                  <Text style={styles.photoPickerText}>Add a photo</Text>
-                </TouchableOpacity>
-              )}
 
               {/* Location */}
               <Text style={styles.detailLabel}>Location</Text>
@@ -584,17 +584,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  photoPreviewContainer: {
+  topPhotoContainer: {
     position: 'relative',
     borderRadius: 16,
     overflow: 'hidden',
+    marginBottom: 16,
   },
-  photoPreview: {
+  topPhoto: {
     width: '100%',
-    height: 200,
+    height: 220,
     borderRadius: 16,
   },
-  photoRemove: {
+  topPhotoPicker: {
+    width: '100%',
+    height: 220,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  topPhotoPickerIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  topPhotoPickerText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  topPhotoRemove: {
     position: 'absolute',
     top: 10,
     right: 10,

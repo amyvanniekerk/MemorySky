@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/Navigation';
 import { colors } from '../theme/colors';
@@ -13,7 +14,6 @@ import { UserProfile } from '../hooks/useUserProfile';
 import {
   requestNotificationPermissions,
   setDailyCaptureEnabled,
-  getNextCaptureTime,
 } from '../utils/dailyNotification';
 import ProfileAvatar from '../components/shared/ProfileAvatar';
 import DailyCaptureToggle from '../components/profile/DailyCaptureToggle';
@@ -26,13 +26,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Profile'> & {
 
 export default function ProfileScreen({ navigation, profile, onUpdateDailyCapture, onLogout }: Props) {
   const [dailyCapture, setDailyCapture] = useState(profile.dailyCaptureEnabled);
-  const [nextCapture, setNextCapture] = useState<Date | null>(null);
-
-  useEffect(() => {
-    if (dailyCapture) {
-      getNextCaptureTime().then(setNextCapture);
-    }
-  }, [dailyCapture]);
 
   const handleToggleDailyCapture = async (value: boolean) => {
     if (value) {
@@ -48,12 +41,6 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
     setDailyCapture(value);
     await setDailyCaptureEnabled(value);
     await onUpdateDailyCapture(value);
-    if (value) {
-      const next = await getNextCaptureTime();
-      setNextCapture(next);
-    } else {
-      setNextCapture(null);
-    }
   };
 
   const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', {
@@ -69,7 +56,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← Back</Text>
@@ -90,7 +77,6 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
         <Text style={styles.sectionTitle}>Notifications</Text>
         <DailyCaptureToggle
           enabled={dailyCapture}
-          nextCaptureTime={nextCapture}
           onToggle={handleToggleDailyCapture}
         />
       </View>
@@ -101,7 +87,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
