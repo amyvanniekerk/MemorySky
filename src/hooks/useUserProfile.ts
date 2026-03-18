@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import { Memory } from '../types/Memory';
 
 const PROFILE_KEY = 'memorySky_userProfile';
@@ -13,23 +15,60 @@ export interface UserProfile {
   dailyCaptureEnabled: boolean;
 }
 
-export default function useUserProfile() {
+export default function useUserProfile(session: Session | null) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [fetchedForUid, setFetchedForUid] = useState<string | null>(null);
 
+  // Loading is true whenever we haven't fetched for the current session yet
+  const loading = session ? fetchedForUid !== session.user.id : false;
+
+  // Load profile from Supabase when session changes
   useEffect(() => {
-    AsyncStorage.getItem(PROFILE_KEY)
-      .then((data) => {
-        if (data) setProfile(JSON.parse(data));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    if (!session) {
+      setProfile(null);
+      setFetchedForUid(null);
+      return;
+    }
 
-  const saveProfile = useCallback(async (updated: UserProfile) => {
-    setProfile(updated);
-    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
-  }, []);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // Try Supabase first
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name, birthday, daily_capture_time, created_at')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!cancelled && data && !error) {
+          const p: UserProfile = {
+            name: data.name,
+            birthday: data.birthday ? new Date(data.birthday).toISOString() : '',
+            createdAt: data.created_at,
+            dailyCaptureEnabled: !!data.daily_capture_time,
+          };
+          setProfile(p);
+          // Cache locally
+          await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+        } else if (!cancelled) {
+          // Fallback to local cache
+          const local = await AsyncStorage.getItem(PROFILE_KEY);
+          if (local) setProfile(JSON.parse(local));
+        }
+      } catch {
+        // Fallback to local cache
+        if (!cancelled) {
+          const local = await AsyncStorage.getItem(PROFILE_KEY);
+          if (local) setProfile(JSON.parse(local));
+        }
+      } finally {
+        if (!cancelled) setFetchedForUid(session.user.id);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [session?.user?.id]);
 
   const createBirthdayMemory = useCallback(async (name: string, birthday: Date) => {
     const birthdayMemory: Memory = {
@@ -42,7 +81,6 @@ export default function useUserProfile() {
       importance: 5,
     };
 
-    // Load existing memories, prepend birthday if not already there
     const existing = await AsyncStorage.getItem(MEMORIES_KEY);
     const memories: Memory[] = existing ? JSON.parse(existing) : [];
     if (!memories.find((m: Memory) => m.id === BIRTHDAY_MEMORY_ID)) {
@@ -52,21 +90,42 @@ export default function useUserProfile() {
   }, []);
 
   const createProfile = useCallback(async (name: string, birthday: Date) => {
+    if (!session) return;
+
     const newProfile: UserProfile = {
       name,
       birthday: birthday.toISOString(),
       createdAt: new Date().toISOString(),
       dailyCaptureEnabled: false,
     };
+
+    // Save to Supabase
+    await supabase.from('profiles').upsert({
+      id: session.user.id,
+      name,
+      birthday: birthday.toISOString().split('T')[0],
+    });
+
+    // Save birthday memory locally
     await createBirthdayMemory(name, birthday);
-    await saveProfile(newProfile);
+
+    // Cache locally and update state
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
+    setProfile(newProfile);
+
     return newProfile;
-  }, [saveProfile, createBirthdayMemory]);
+  }, [session, createBirthdayMemory]);
 
   const updateDailyCapture = useCallback(async (enabled: boolean) => {
-    if (!profile) return;
-    await saveProfile({ ...profile, dailyCaptureEnabled: enabled });
-  }, [profile, saveProfile]);
+    if (!profile || !session) return;
+    const updated = { ...profile, dailyCaptureEnabled: enabled };
+    setProfile(updated);
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+
+    await supabase.from('profiles').update({
+      daily_capture_time: enabled ? '09:00' : null,
+    }).eq('id', session.user.id);
+  }, [profile, session]);
 
   const logout = useCallback(async () => {
     setProfile(null);

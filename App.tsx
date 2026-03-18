@@ -42,7 +42,7 @@ type AuthView = 'login' | 'signup';
 
 export default function App() {
   const { session, loading: authLoading, signUp, signIn, signOut } = useAuth();
-  const { profile, loading: profileLoading, createProfile, updateDailyCapture, logout } = useUserProfile();
+  const { profile, loading: profileLoading, createProfile, updateDailyCapture, logout } = useUserProfile(session);
   useDailyCapture(navigationRef);
 
   const [authView, setAuthView] = useState<AuthView>('signup');

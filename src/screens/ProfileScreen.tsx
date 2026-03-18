@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/Navigation';
 import { colors } from '../theme/colors';
@@ -70,7 +69,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← Back</Text>
@@ -102,7 +101,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
