@@ -96,7 +96,7 @@ export default function SignupStepEmail({ onNext, onLogin }: SignupStepEmailProp
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        textContentType="newPassword"
+        textContentType="oneTimeCode"
       />
 
       <TextInput
@@ -106,7 +106,7 @@ export default function SignupStepEmail({ onNext, onLogin }: SignupStepEmailProp
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
-        textContentType="newPassword"
+        textContentType="oneTimeCode"
         onSubmitEditing={handleNext}
       />
 

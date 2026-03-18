@@ -1,5 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, DimensionValue } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 interface StarFieldProps {
   count?: number;
@@ -7,45 +9,107 @@ interface StarFieldProps {
 
 interface StarData {
   id: number;
-  left: DimensionValue;
-  top: DimensionValue;
+  x: number;
+  y: number;
   size: number;
   opacity: number;
+  twinkleDuration: number;
+  driftX: number;
+  driftY: number;
+  driftDuration: number;
 }
 
 const generateStars = (count: number): StarData[] =>
   Array.from({ length: count }, (_, i) => ({
     id: i,
-    left: `${Math.floor(Math.random() * 96) + 2}%` as DimensionValue,
-    top: `${Math.floor(Math.random() * 96) + 2}%` as DimensionValue,
+    x: Math.random() * (SCREEN_W + 80) - 40,
+    y: Math.random() * (SCREEN_H + 80) - 40,
     size: Math.random() < 0.2 ? 3 : Math.random() < 0.5 ? 2 : 1.2,
     opacity: Math.random() * 0.55 + 0.2,
+    twinkleDuration: 2000 + Math.random() * 4000,
+    driftX: (Math.random() - 0.5) * 80,
+    driftY: (Math.random() - 0.5) * 60,
+    driftDuration: 15000 + Math.random() * 25000,
   }));
 
-// Pre-generate to avoid re-renders
-const DEFAULT_STARS = generateStars(50);
+function DriftingStar({ star }: { star: StarData }) {
+  const twinkle = useRef(new Animated.Value(star.opacity)).current;
+  const drift = useRef(new Animated.Value(0)).current;
 
-export default function StarField({ count }: StarFieldProps) {
-  const stars = count && count !== 50 ? generateStars(count) : DEFAULT_STARS;
+  useEffect(() => {
+    // Twinkle
+    const minOpacity = star.opacity * 0.3;
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(twinkle, {
+          toValue: minOpacity,
+          duration: star.twinkleDuration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(twinkle, {
+          toValue: star.opacity,
+          duration: star.twinkleDuration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
+    // Drift
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(drift, {
+          toValue: 1,
+          duration: star.driftDuration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(drift, {
+          toValue: 0,
+          duration: star.driftDuration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const translateX = drift.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, star.driftX],
+  });
+  const translateY = drift.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, star.driftY],
+  });
 
   return (
-    <View style={styles.container} pointerEvents="none">
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: star.x,
+        top: star.y,
+        width: star.size,
+        height: star.size,
+        borderRadius: star.size,
+        backgroundColor: '#fff',
+        opacity: twinkle,
+        transform: [{ translateX }, { translateY }],
+      }}
+    />
+  );
+}
+
+export default function StarField({ count = 50 }: StarFieldProps) {
+  const stars = useMemo(() => generateStars(count), [count]);
+
+  return (
+    <Animated.View style={styles.container} pointerEvents="none">
       {stars.map((s) => (
-        <View
-          key={s.id}
-          style={{
-            position: 'absolute',
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            borderRadius: s.size,
-            backgroundColor: '#fff',
-            opacity: s.opacity,
-          }}
-        />
+        <DriftingStar key={s.id} star={s} />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 

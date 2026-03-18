@@ -42,7 +42,7 @@ export default function LoginScreen({ onSignIn, onSwitchToSignup }: LoginScreenP
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.root}>
-        <StarField count={40} />
+        <StarField count={60} />
         <Animated.View
           style={[styles.content, { transform: [{ translateY: keyboardOffset }] }]}
         >
@@ -69,7 +69,7 @@ export default function LoginScreen({ onSignIn, onSwitchToSignup }: LoginScreenP
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            textContentType="password"
+            textContentType="oneTimeCode"
             onSubmitEditing={handleLogin}
           />
 

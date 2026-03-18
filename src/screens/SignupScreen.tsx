@@ -71,7 +71,7 @@ export default function SignupScreen({ onSignUp, onComplete, onSwitchToLogin, st
 
   return (
     <Animated.View style={[styles.root, { opacity: fadeOut }]}>
-      <StarField count={40} />
+      <StarField count={60} />
       <Animated.View
         style={[styles.content, { transform: [{ translateY: keyboardOffset }] }]}
       >
