@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   Alert,
 } from 'react-native';
@@ -13,12 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { colors } from '../../theme/colors';
 import { Constellation } from '../../types/Constellation';
 import { Memory } from '../../types/Memory';
-
-const PALETTE = [
-  '#c060d0', '#FFD93D', '#4A90E2', '#6BCB77',
-  '#FF8C42', '#A8E6CF', '#D47B8A', '#E63946',
-  '#4ac8b0', '#C8A2C8',
-];
+import ConstellationForm, { PALETTE } from './ConstellationForm';
 
 interface Props {
   visible: boolean;
@@ -155,97 +149,19 @@ export default function ConstellationManager({
   );
 
   const renderForm = () => (
-    <>
-      <View style={styles.formHeader}>
-        <TouchableOpacity onPress={resetForm}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.heading}>
-          {view === 'create' ? 'New Constellation' : 'Edit Constellation'}
-        </Text>
-        <View style={{ width: 50 }} />
-      </View>
-
-      <Text style={styles.label}>Name</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="e.g. Summer 2025"
-        placeholderTextColor={colors.textSubtle}
-        autoFocus={view === 'create'}
-      />
-
-      <Text style={styles.label}>Color</Text>
-      <View style={styles.colorRow}>
-        {PALETTE.map((c) => (
-          <TouchableOpacity
-            key={c}
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: c },
-              color === c && styles.colorSelected,
-            ]}
-            onPress={() => setColor(c)}
-          />
-        ))}
-      </View>
-
-      <Text style={styles.label}>
-        Memories ({selectedMemoryIds.length} selected)
-      </Text>
-      <ScrollView style={styles.memoryList}>
-        {visibleMemories.map((m) => {
-          const isSelected = selectedMemoryIds.includes(m.id);
-          return (
-            <TouchableOpacity
-              key={m.id}
-              style={[styles.memoryItem, isSelected && styles.memoryItemSelected]}
-              onPress={() => toggleMemory(m.id)}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  isSelected && { backgroundColor: color, borderColor: color },
-                ]}
-              >
-                {isSelected && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <View style={styles.memoryInfo}>
-                <Text style={styles.memoryTitle} numberOfLines={1}>
-                  {m.title}
-                </Text>
-                <Text style={styles.memoryDate}>
-                  {m.date.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.formActions}>
-        {view === 'edit' && editingId && (
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDelete(editingId)}
-          >
-            <Text style={styles.deleteText}>Delete</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={[styles.saveButton, !name.trim() && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={!name.trim()}
-        >
-          <Text style={styles.saveText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-    </>
+    <ConstellationForm
+      mode={view as 'create' | 'edit'}
+      name={name}
+      color={color}
+      selectedMemoryIds={selectedMemoryIds}
+      visibleMemories={visibleMemories}
+      onNameChange={setName}
+      onColorChange={setColor}
+      onToggleMemory={toggleMemory}
+      onSave={handleSave}
+      onBack={resetForm}
+      onDelete={view === 'edit' && editingId ? () => handleDelete(editingId) : undefined}
+    />
   );
 
   return (
@@ -353,124 +269,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   createButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  formHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  backText: {
-    fontSize: 16,
-    color: colors.accent,
-    width: 50,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: colors.bgInput,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: colors.textPrimary,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  colorSwatch: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-  },
-  colorSelected: {
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  memoryList: {
-    maxHeight: 200,
-  },
-  memoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  memoryItemSelected: {
-    backgroundColor: 'rgba(123, 75, 191, 0.08)',
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.textMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  checkmark: {
-    fontSize: 13,
-    color: '#fff',
-    fontWeight: '700',
-  },
-  memoryInfo: {
-    flex: 1,
-  },
-  memoryTitle: {
-    fontSize: 15,
-    color: colors.textPrimary,
-    fontWeight: '500',
-  },
-  memoryDate: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  formActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 16,
-  },
-  deleteButton: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E63946',
-  },
-  deleteText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#E63946',
-  },
-  saveButton: {
-    flex: 2,
-    backgroundColor: colors.fabBg,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.4,
-  },
-  saveText: {
     fontSize: 15,
     fontWeight: '600',
     color: '#fff',
