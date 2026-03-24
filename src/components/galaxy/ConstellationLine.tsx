@@ -17,34 +17,20 @@ export default function ConstellationLine({ x1, y1, x2, y2, color }: Constellati
 
   return (
     <>
+      {/* Single glowing line */}
       <View
         style={[
           styles.line,
           {
             width: length,
-            height: 3,
+            height: 2,
             left: x1,
             top: y1 - 1,
             backgroundColor: color,
-            opacity: 0.06,
+            opacity: 0.5,
             transform: [{ rotate: `${angle}rad` }],
             transformOrigin: 'left center',
-            borderRadius: 1.5,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.line,
-          {
-            width: length,
-            height: 1,
-            left: x1,
-            top: y1,
-            backgroundColor: color,
-            opacity: 0.2,
-            transform: [{ rotate: `${angle}rad` }],
-            transformOrigin: 'left center',
+            borderRadius: 1,
           },
         ]}
       />

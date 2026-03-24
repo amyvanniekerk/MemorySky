@@ -51,6 +51,19 @@ export default function useUserProfile(session: Session | null) {
           setProfile(p);
           // Cache locally
           await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+
+          // Ensure birthday star exists in Supabase
+          if (data.birthday && data.name) {
+            const { data: existing } = await supabase
+              .from('memories')
+              .select('id')
+              .eq('id', BIRTHDAY_MEMORY_ID)
+              .eq('user_id', session.user.id)
+              .single();
+            if (!existing) {
+              await createBirthdayMemory(data.name, new Date(data.birthday), session.user.id);
+            }
+          }
         } else if (!cancelled) {
           // Fallback to local cache
           const local = await AsyncStorage.getItem(PROFILE_KEY);
@@ -70,7 +83,7 @@ export default function useUserProfile(session: Session | null) {
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
-  const createBirthdayMemory = useCallback(async (name: string, birthday: Date) => {
+  const createBirthdayMemory = useCallback(async (name: string, birthday: Date, userId: string) => {
     const birthdayMemory: Memory = {
       id: BIRTHDAY_MEMORY_ID,
       title: `${name} was born`,
@@ -81,12 +94,28 @@ export default function useUserProfile(session: Session | null) {
       importance: 5,
     };
 
+    // Save to local cache
     const existing = await AsyncStorage.getItem(MEMORIES_KEY);
     const memories: Memory[] = existing ? JSON.parse(existing) : [];
     if (!memories.find((m: Memory) => m.id === BIRTHDAY_MEMORY_ID)) {
       const updated = [birthdayMemory, ...memories];
       await AsyncStorage.setItem(MEMORIES_KEY, JSON.stringify(updated));
     }
+
+    // Save to Supabase
+    const { error } = await supabase.from('memories').upsert({
+      id: BIRTHDAY_MEMORY_ID,
+      user_id: userId,
+      title: birthdayMemory.title,
+      date: birthday.toISOString(),
+      description: birthdayMemory.description,
+      emotion: birthdayMemory.emotion,
+      category: birthdayMemory.category,
+      importance: birthdayMemory.importance,
+      hidden: false,
+    }, { onConflict: 'id' });
+
+    if (error) console.warn('Failed to save birthday memory to Supabase:', error.message);
   }, []);
 
   const createProfile = useCallback(async (name: string, birthday: Date) => {
@@ -106,8 +135,8 @@ export default function useUserProfile(session: Session | null) {
       birthday: birthday.toISOString().split('T')[0],
     });
 
-    // Save birthday memory locally
-    await createBirthdayMemory(name, birthday);
+    // Save birthday memory locally and to Supabase
+    await createBirthdayMemory(name, birthday, session.user.id);
 
     // Cache locally and update state
     await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));

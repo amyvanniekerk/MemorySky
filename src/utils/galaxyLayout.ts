@@ -35,26 +35,12 @@ export function calculateStarPositions(
 ): StarPosition[] {
   if (memories.length === 0) return [];
 
-  // Separate birthday star — it gets a fixed position at the galaxy center
-  const birthdayStar = memories.find((m) => m.id === BIRTHDAY_MEMORY_ID);
-  const regularMemories = memories.filter((m) => m.id !== BIRTHDAY_MEMORY_ID);
-
   const results: StarPosition[] = [];
 
-  // Place birthday star at the very center
-  if (birthdayStar) {
-    results.push({
-      memory: birthdayStar,
-      x: centerX,
-      y: centerY,
-      size: 2 + birthdayStar.importance * 1.5,
-    });
-  }
+  if (memories.length === 0) return results;
 
-  if (regularMemories.length === 0) return results;
-
-  // Sort by date to determine time range (excluding birthday)
-  const sorted = [...regularMemories].sort(
+  // Sort by date to determine time range
+  const sorted = [...memories].sort(
     (a, b) => a.date.getTime() - b.date.getTime()
   );
 
@@ -62,12 +48,12 @@ export function calculateStarPositions(
   const newest = sorted[sorted.length - 1].date.getTime();
   const timeRange = newest - oldest || 1; // avoid division by zero
 
-  for (const memory of regularMemories) {
+  for (const memory of memories) {
     // Normalize time: 0 (oldest) to 1 (newest)
     const timeNorm = (memory.date.getTime() - oldest) / timeRange;
 
-    // Newer memories closer to center, older farther out
-    const radius = (1 - timeNorm) * maxRadius * 0.85 + maxRadius * 0.08;
+    // Newest memories closer to center, oldest farther out
+    const radius = (1 - timeNorm) * maxRadius * 0.75 + maxRadius * 0.15;
 
     // Spiral: base angle from category + time-based rotation
     const baseAngle = CATEGORY_ANGLES[memory.category];

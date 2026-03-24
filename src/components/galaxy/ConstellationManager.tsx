@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
 import { colors } from '../../theme/colors';
 import { Constellation } from '../../types/Constellation';
 import { Memory } from '../../types/Memory';
@@ -99,7 +100,7 @@ export default function ConstellationManager({
 
     if (view === 'create') {
       const newConstellation: Constellation = {
-        id: Date.now().toString(),
+        id: uuidv4(),
         name: name.trim(),
         color,
         memoryIds: selectedMemoryIds,
