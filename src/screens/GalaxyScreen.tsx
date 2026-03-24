@@ -17,20 +17,25 @@ import { RootStackParamList } from '../types/Navigation';
 import { Memory } from '../types/Memory';
 import { colors, emotionColors } from '../theme/colors';
 import useMemoryStorage from '../hooks/useMemoryStorage';
+import useConstellationStorage from '../hooks/useConstellationStorage';
 import InteractiveGalaxy from '../components/galaxy/InteractiveGalaxy';
 import GalaxyShareCapture from '../components/galaxy/GalaxyShareCapture';
 import GalaxyToast from '../components/galaxy/GalaxyToast';
+import ConstellationManager from '../components/galaxy/ConstellationManager';
 import StarField from '../components/shared/StarField';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Galaxy'>;
 
 export default function GalaxyScreen({ navigation }: Props) {
   const { memories, reload } = useMemoryStorage();
+  const { constellations, save: saveConstellations, reload: reloadConstellations } = useConstellationStorage();
+  const [constellationManagerVisible, setConstellationManagerVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+      reloadConstellations();
+    }, [reload, reloadConstellations])
   );
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [hiddenToast, setHiddenToast] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
@@ -63,12 +68,20 @@ export default function GalaxyScreen({ navigation }: Props) {
               ) : <View style={styles.headerSpacer} />}
               <Text style={styles.title}>Your Galaxy</Text>
               {!isCapturing ? (
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={onShare}
-                >
-                  <Text style={styles.headerButtonText}>↗</Text>
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                  <TouchableOpacity
+                    style={styles.headerButton}
+                    onPress={() => setConstellationManagerVisible(true)}
+                  >
+                    <Text style={styles.headerButtonText}>⟡</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.headerButton}
+                    onPress={onShare}
+                  >
+                    <Text style={styles.headerButtonText}>↗</Text>
+                  </TouchableOpacity>
+                </View>
               ) : <View style={styles.headerSpacer} />}
             </View>
 
@@ -83,7 +96,7 @@ export default function GalaxyScreen({ navigation }: Props) {
               </View>
             ) : (
               <View style={styles.galaxyContainer}>
-                <InteractiveGalaxy memories={memories} onStarPress={setSelectedMemory} onHiddenStarPress={handleHiddenStarPress} />
+                <InteractiveGalaxy memories={memories} constellations={constellations} onStarPress={setSelectedMemory} onHiddenStarPress={handleHiddenStarPress} />
               </View>
             )}
 
@@ -212,6 +225,15 @@ export default function GalaxyScreen({ navigation }: Props) {
             </TouchableOpacity>
           </Modal>
 
+          {/* Constellation manager */}
+          <ConstellationManager
+            visible={constellationManagerVisible}
+            constellations={constellations}
+            memories={memories}
+            onSave={saveConstellations}
+            onClose={() => setConstellationManagerVisible(false)}
+          />
+
           {/* Hidden star toast */}
           <GalaxyToast visible={hiddenToast.visible} message="This memory is hidden" x={hiddenToast.x} y={hiddenToast.y} />
         </>
@@ -246,6 +268,10 @@ const styles = StyleSheet.create({
   headerButtonText: {
     fontSize: 18,
     color: colors.textPrimary,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
   },
   headerSpacer: {
     width: 36,
