@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/Navigation';
@@ -21,10 +22,11 @@ import DailyCaptureToggle from '../components/profile/DailyCaptureToggle';
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'> & {
   profile: UserProfile;
   onUpdateDailyCapture: (enabled: boolean) => Promise<void>;
+  onUpdateAvatar: (localUri: string) => Promise<void>;
   onLogout: () => Promise<void>;
 };
 
-export default function ProfileScreen({ navigation, profile, onUpdateDailyCapture, onLogout }: Props) {
+export default function ProfileScreen({ navigation, profile, onUpdateDailyCapture, onUpdateAvatar, onLogout }: Props) {
   const [dailyCapture, setDailyCapture] = useState(profile.dailyCaptureEnabled);
 
   const handleToggleDailyCapture = async (value: boolean) => {
@@ -67,7 +69,23 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
 
       {/* Avatar */}
       <View style={styles.avatarSection}>
-        <ProfileAvatar name={profile.name} size={80} />
+        <ProfileAvatar
+          name={profile.name}
+          size={80}
+          avatarUrl={profile.avatarUrl}
+          onPress={async () => {
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.7,
+            });
+            if (!result.canceled && result.assets[0]) {
+              await onUpdateAvatar(result.assets[0].uri);
+            }
+          }}
+        />
+        <Text style={styles.changeAvatar}>Tap to change photo</Text>
         <Text style={styles.name}>{profile.name}</Text>
         <Text style={styles.memberSince}>Stargazer since {memberSince}</Text>
       </View>
@@ -119,11 +137,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
   },
+  changeAvatar: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 8,
+  },
   name: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginTop: 16,
+    marginTop: 12,
     marginBottom: 4,
   },
   memberSince: {

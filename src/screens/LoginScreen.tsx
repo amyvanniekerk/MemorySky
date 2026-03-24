@@ -16,15 +16,33 @@ import useKeyboardOffset from '../hooks/useKeyboardOffset';
 
 interface LoginScreenProps {
   onSignIn: (email: string, password: string) => Promise<{ error: { message: string } | null }>;
+  onResetPassword: (email: string) => Promise<{ error: { message: string } | null }>;
   onSwitchToSignup: () => void;
 }
 
-export default function LoginScreen({ onSignIn, onSwitchToSignup }: LoginScreenProps) {
+export default function LoginScreen({ onSignIn, onResetPassword, onSwitchToSignup }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const keyboardOffset = useKeyboardOffset(0.35);
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Enter your email first');
+      return;
+    }
+    setBusy(true);
+    const { error: err } = await onResetPassword(email.trim().toLowerCase());
+    setBusy(false);
+    if (err) {
+      setError(err.message);
+    } else {
+      setResetSent(true);
+      setError('');
+    }
+  };
 
   const handleLogin = async () => {
     setError('');
@@ -74,6 +92,13 @@ export default function LoginScreen({ onSignIn, onSwitchToSignup }: LoginScreenP
           />
 
           {!!error && <Text style={styles.error}>{error}</Text>}
+          {resetSent && (
+            <Text style={styles.success}>Password reset email sent. Check your inbox.</Text>
+          )}
+
+          <TouchableOpacity onPress={handleForgotPassword} disabled={busy}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, busy && styles.buttonDisabled]}
@@ -143,6 +168,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  success: {
+    color: '#6BCB77',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  forgotText: {
+    fontSize: 14,
+    color: colors.accent,
+    marginBottom: 16,
   },
   button: {
     backgroundColor: colors.fabBg,

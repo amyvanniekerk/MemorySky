@@ -13,6 +13,7 @@ export interface UserProfile {
   birthday: string; // ISO date string
   createdAt: string;
   dailyCaptureEnabled: boolean;
+  avatarUrl?: string;
 }
 
 export default function useUserProfile(session: Session | null) {
@@ -37,7 +38,7 @@ export default function useUserProfile(session: Session | null) {
         // Try Supabase first
         const { data, error } = await supabase
           .from('profiles')
-          .select('name, birthday, daily_capture_time, created_at')
+          .select('name, birthday, daily_capture_time, created_at, avatar_url')
           .eq('id', session.user.id)
           .single();
 
@@ -47,6 +48,7 @@ export default function useUserProfile(session: Session | null) {
             birthday: data.birthday ? new Date(data.birthday).toISOString() : '',
             createdAt: data.created_at,
             dailyCaptureEnabled: !!data.daily_capture_time,
+            avatarUrl: data.avatar_url ?? undefined,
           };
           setProfile(p);
           // Cache locally
@@ -156,10 +158,46 @@ export default function useUserProfile(session: Session | null) {
     }).eq('id', session.user.id);
   }, [profile, session]);
 
+  const updateAvatar = useCallback(async (localUri: string) => {
+    if (!profile || !session) return;
+
+    try {
+      const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const path = `${session.user.id}/avatar.${ext}`;
+
+      const response = await fetch(localUri);
+      const blob = await response.blob();
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, arrayBuffer, {
+          contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+          upsert: true,
+        });
+
+      if (uploadErr) {
+        console.warn('Avatar upload failed:', uploadErr.message);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', session.user.id);
+
+      const updated = { ...profile, avatarUrl };
+      setProfile(updated);
+      await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Avatar update failed:', err);
+    }
+  }, [profile, session]);
+
   const logout = useCallback(async () => {
     setProfile(null);
     await AsyncStorage.removeItem(PROFILE_KEY);
   }, []);
 
-  return { profile, loading, createProfile, updateDailyCapture, logout };
+  return { profile, loading, createProfile, updateDailyCapture, updateAvatar, logout };
 }

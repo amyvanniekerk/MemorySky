@@ -146,7 +146,40 @@ export default function useMemoryStorage() {
         return;
       }
 
-      const mems = (data ?? []).map(rowToMemory);
+      const remoteMems = (data ?? []).map(rowToMemory);
+      const remoteIds = new Set(remoteMems.map((m) => m.id));
+
+      // Migrate any local-only memories that aren't in Supabase yet
+      let localOnly: Memory[] = [];
+      try {
+        const localData = await AsyncStorage.getItem(STORAGE_KEY);
+        if (localData) {
+          const localMems = parseLocalMemories(localData);
+          localOnly = localMems.filter((m) => !remoteIds.has(m.id));
+        }
+      } catch { /* ignore */ }
+
+      if (localOnly.length > 0 && userId) {
+        const withUploads = await Promise.all(
+          localOnly.map(async (m) => {
+            if (isLocalUri(m.photoUri)) {
+              const remoteUrl = await uploadPhoto(userId, m.id, m.photoUri!);
+              if (remoteUrl) return { ...m, photoUri: remoteUrl };
+            }
+            return m;
+          })
+        );
+        const rows = withUploads.map((m) => memoryToRow(m, userId));
+        const { error: upsertErr } = await supabase
+          .from('memories')
+          .upsert(rows, { onConflict: 'id' });
+        if (upsertErr) {
+          console.warn('Local migration failed:', upsertErr.message);
+        }
+      }
+
+      const mems = [...remoteMems, ...localOnly];
+      mems.sort((a, b) => b.date.getTime() - a.date.getTime());
       setMemories(mems);
       prevRef.current = mems;
       await cacheLocally(mems);
@@ -155,6 +188,26 @@ export default function useMemoryStorage() {
       await loadFromLocal();
     }
   }, [userId, loadFromLocal]);
+
+  // Real-time subscription — reload when another device changes memories
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('memories-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'memories', filter: `user_id=eq.${userId}` },
+        () => {
+          loadFromSupabase();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, loadFromSupabase]);
 
   const reload = useCallback(async () => {
     if (userId) {

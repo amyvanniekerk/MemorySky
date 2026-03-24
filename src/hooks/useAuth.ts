@@ -41,5 +41,13 @@ export default function useAuth() {
     await supabase.auth.signOut();
   }, []);
 
-  return { session, loading, signUp, signIn, signOut };
+  const resetPassword = useCallback(
+    async (email: string): Promise<{ error: AuthError | null }> => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      return { error };
+    },
+    [],
+  );
+
+  return { session, loading, signUp, signIn, signOut, resetPassword };
 }

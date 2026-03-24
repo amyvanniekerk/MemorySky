@@ -11,6 +11,7 @@ import {
   Image,
   LayoutAnimation,
   UIManager,
+  Alert,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -49,9 +50,10 @@ interface MemoryFormModalProps {
   initialPhotoUri?: string;
   onClose: () => void;
   onSave: (memory: Omit<Memory, 'id'> & { id?: string }) => void;
+  onDelete?: () => void;
 }
 
-export default function MemoryFormModal({ visible, editingMemory, initialPhotoUri, onClose, onSave }: MemoryFormModalProps) {
+export default function MemoryFormModal({ visible, editingMemory, initialPhotoUri, onClose, onSave, onDelete }: MemoryFormModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [emotion, setEmotion] = useState<EmotionType>('happy');
@@ -361,6 +363,21 @@ export default function MemoryFormModal({ visible, editingMemory, initialPhotoUr
                   </TouchableOpacity>
                 </>
               )}
+
+              {/* Delete — only show when editing */}
+              {editingMemory && onDelete && (
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => {
+                    Alert.alert('Delete Memory', 'This cannot be undone.', [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Delete', style: 'destructive', onPress: onDelete },
+                    ]);
+                  }}
+                >
+                  <Text style={styles.deleteButtonText}>Delete Memory</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </ScrollView>
@@ -646,5 +663,19 @@ const styles = StyleSheet.create({
   hideToggleText: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  deleteButton: {
+    marginTop: 24,
+    backgroundColor: 'rgba(230, 57, 70, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(230, 57, 70, 0.25)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#E63946',
   },
 });

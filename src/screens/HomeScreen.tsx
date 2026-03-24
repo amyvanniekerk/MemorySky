@@ -33,9 +33,10 @@ const SAMPLE_MEMORIES: Memory[] = [
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'> & {
   userName: string;
+  avatarUrl?: string;
 };
 
-export default function HomeScreen({ navigation, route, userName }: Props) {
+export default function HomeScreen({ navigation, route, userName, avatarUrl }: Props) {
   const { memories, save } = useMemoryStorage();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null);
@@ -74,6 +75,10 @@ export default function HomeScreen({ navigation, route, userName }: Props) {
   };
 
 
+  const handleDeleteMemory = (memory: Memory) => {
+    save(memories.filter((m) => m.id !== memory.id));
+  };
+
   const handleOpenNew = () => {
     setEditingMemory(null);
     setModalVisible(true);
@@ -97,6 +102,7 @@ export default function HomeScreen({ navigation, route, userName }: Props) {
           )}
           <ProfileAvatar
             name={userName}
+            avatarUrl={avatarUrl}
             size={36}
             onPress={() => navigation.navigate('Profile')}
           />
@@ -144,6 +150,11 @@ export default function HomeScreen({ navigation, route, userName }: Props) {
           handleSaveMemory(data);
           setInitialPhotoUri(undefined);
         }}
+        onDelete={editingMemory ? () => {
+          handleDeleteMemory(editingMemory);
+          setEditingMemory(null);
+          setModalVisible(false);
+        } : undefined}
       />
     </SafeAreaView>
   );

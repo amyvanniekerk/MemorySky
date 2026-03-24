@@ -42,8 +42,8 @@ const navTheme = {
 type AuthView = 'login' | 'signup';
 
 export default function App() {
-  const { session, loading: authLoading, signUp, signIn, signOut } = useAuth();
-  const { profile, loading: profileLoading, createProfile, updateDailyCapture, logout } = useUserProfile(session);
+  const { session, loading: authLoading, signUp, signIn, signOut, resetPassword } = useAuth();
+  const { profile, loading: profileLoading, createProfile, updateDailyCapture, updateAvatar, logout } = useUserProfile(session);
   useDailyCapture(navigationRef);
 
   const [authView, setAuthView] = useState<AuthView>('signup');
@@ -71,6 +71,7 @@ export default function App() {
         authView === 'login' ? (
           <LoginScreen
             onSignIn={signIn}
+            onResetPassword={resetPassword}
             onSwitchToSignup={() => setAuthView('signup')}
           />
         ) : (
@@ -103,7 +104,7 @@ export default function App() {
               initialRouteName="Galaxy"
             >
               <Stack.Screen name="Home">
-                {(props) => <HomeScreen {...props} userName={profile.name} />}
+                {(props) => <HomeScreen {...props} userName={profile.name} avatarUrl={profile.avatarUrl} />}
               </Stack.Screen>
               <Stack.Screen name="Galaxy" component={GalaxyScreen} />
               <Stack.Screen name="Capture" component={CaptureScreen} />
@@ -113,6 +114,7 @@ export default function App() {
                     {...props}
                     profile={profile}
                     onUpdateDailyCapture={updateDailyCapture}
+                    onUpdateAvatar={updateAvatar}
                     onLogout={handleLogout}
                   />
                 )}
