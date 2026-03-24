@@ -46,6 +46,7 @@ export default function LoginScreen({ onSignIn, onResetPassword, onSwitchToSignu
 
   const handleLogin = async () => {
     setError('');
+    setResetSent(false);
     if (!email.trim() || !password) {
       setError('Email and password are required');
       return;

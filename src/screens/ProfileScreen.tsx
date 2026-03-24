@@ -29,6 +29,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Profile'> & {
 export default function ProfileScreen({ navigation, profile, onUpdateDailyCapture, onUpdateAvatar, onLogout }: Props) {
   const [dailyCapture, setDailyCapture] = useState(profile.dailyCaptureEnabled);
 
+  const handlePickAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await onUpdateAvatar(result.assets[0].uri);
+    }
+  };
+
   const handleToggleDailyCapture = async (value: boolean) => {
     if (value) {
       const granted = await requestNotificationPermissions();
@@ -73,17 +85,7 @@ export default function ProfileScreen({ navigation, profile, onUpdateDailyCaptur
           name={profile.name}
           size={80}
           avatarUrl={profile.avatarUrl}
-          onPress={async () => {
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.7,
-            });
-            if (!result.canceled && result.assets[0]) {
-              await onUpdateAvatar(result.assets[0].uri);
-            }
-          }}
+          onPress={handlePickAvatar}
         />
         <Text style={styles.changeAvatar}>Tap to change photo</Text>
         <Text style={styles.name}>{profile.name}</Text>
@@ -172,16 +174,16 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   logoutButton: {
-    backgroundColor: 'rgba(230, 57, 70, 0.12)',
+    backgroundColor: colors.destructiveBg,
     borderWidth: 1,
-    borderColor: 'rgba(230, 57, 70, 0.25)',
-    borderRadius: 16,
+    borderColor: colors.destructiveBorder,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#E63946',
+    color: colors.destructive,
   },
 });

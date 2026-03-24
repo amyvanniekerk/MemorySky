@@ -37,6 +37,9 @@ export const colors = {
 
   // Cancel / Destructive
   cancel: '#a8b4d4',
+  destructive: '#E63946',
+  destructiveBg: 'rgba(230, 57, 70, 0.12)',
+  destructiveBorder: 'rgba(230, 57, 70, 0.25)',
 };
 
 // Emotion star colors — galaxy-themed

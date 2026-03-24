@@ -666,9 +666,9 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 24,
-    backgroundColor: 'rgba(230, 57, 70, 0.12)',
+    backgroundColor: colors.destructiveBg,
     borderWidth: 1,
-    borderColor: 'rgba(230, 57, 70, 0.25)',
+    borderColor: colors.destructiveBorder,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -676,6 +676,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#E63946',
+    color: colors.destructive,
   },
 });

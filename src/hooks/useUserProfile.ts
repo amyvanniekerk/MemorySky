@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { uploadToStorage } from '../lib/uploadToStorage';
 import { Memory } from '../types/Memory';
 
 const PROFILE_KEY = 'memorySky_userProfile';
@@ -161,37 +162,18 @@ export default function useUserProfile(session: Session | null) {
   const updateAvatar = useCallback(async (localUri: string) => {
     if (!profile || !session) return;
 
-    try {
-      const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const path = `${session.user.id}/avatar.${ext}`;
+    const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${session.user.id}/avatar.${ext}`;
+    const publicUrl = await uploadToStorage('avatars', path, localUri);
 
-      const response = await fetch(localUri);
-      const blob = await response.blob();
-      const arrayBuffer = await new Response(blob).arrayBuffer();
+    if (!publicUrl) return;
 
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(path, arrayBuffer, {
-          contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-          upsert: true,
-        });
+    const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+    await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', session.user.id);
 
-      if (uploadErr) {
-        console.warn('Avatar upload failed:', uploadErr.message);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-      await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', session.user.id);
-
-      const updated = { ...profile, avatarUrl };
-      setProfile(updated);
-      await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
-    } catch (err) {
-      console.warn('Avatar update failed:', err);
-    }
+    const updated = { ...profile, avatarUrl };
+    setProfile(updated);
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
   }, [profile, session]);
 
   const logout = useCallback(async () => {

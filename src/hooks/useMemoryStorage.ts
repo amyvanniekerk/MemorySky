@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { uploadToStorage } from '../lib/uploadToStorage';
 import { Memory } from '../types/Memory';
 
 const STORAGE_KEY = 'memorySky_memories';
@@ -15,32 +16,9 @@ function isRemoteUri(uri?: string): boolean {
 }
 
 async function uploadPhoto(userId: string, memoryId: string, localUri: string): Promise<string | null> {
-  try {
-    const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${userId}/${memoryId}.${ext}`;
-
-    const response = await fetch(localUri);
-    const blob = await response.blob();
-    const arrayBuffer = await new Response(blob).arrayBuffer();
-
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, arrayBuffer, {
-        contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-        upsert: true,
-      });
-
-    if (error) {
-      console.warn('Photo upload failed:', error.message);
-      return null;
-    }
-
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return urlData.publicUrl;
-  } catch (err) {
-    console.warn('Photo upload failed:', err);
-    return null;
-  }
+  const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const path = `${userId}/${memoryId}.${ext}`;
+  return uploadToStorage(BUCKET, path, localUri);
 }
 
 async function deletePhoto(userId: string, memoryId: string) {
@@ -106,6 +84,8 @@ export default function useMemoryStorage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [userId, setUserId] = useState<string | undefined>();
   const prevRef = useRef<Memory[]>([]);
+  const migrationDoneRef = useRef(false);
+  const savingRef = useRef(false);
 
   // Get current user ID from Supabase session
   useEffect(() => {
@@ -147,39 +127,40 @@ export default function useMemoryStorage() {
       }
 
       const remoteMems = (data ?? []).map(rowToMemory);
-      const remoteIds = new Set(remoteMems.map((m) => m.id));
 
-      // Migrate any local-only memories that aren't in Supabase yet
+      // Migrate local-only memories once per session
       let localOnly: Memory[] = [];
-      try {
-        const localData = await AsyncStorage.getItem(STORAGE_KEY);
-        if (localData) {
-          const localMems = parseLocalMemories(localData);
-          localOnly = localMems.filter((m) => !remoteIds.has(m.id));
-        }
-      } catch { /* ignore */ }
+      if (!migrationDoneRef.current) {
+        migrationDoneRef.current = true;
+        try {
+          const localData = await AsyncStorage.getItem(STORAGE_KEY);
+          if (localData) {
+            const remoteIds = new Set(remoteMems.map((m) => m.id));
+            const localMems = parseLocalMemories(localData);
+            localOnly = localMems.filter((m) => !remoteIds.has(m.id));
+          }
+        } catch { /* ignore */ }
 
-      if (localOnly.length > 0 && userId) {
-        const withUploads = await Promise.all(
-          localOnly.map(async (m) => {
+        if (localOnly.length > 0 && userId) {
+          for (const m of localOnly) {
             if (isLocalUri(m.photoUri)) {
               const remoteUrl = await uploadPhoto(userId, m.id, m.photoUri!);
-              if (remoteUrl) return { ...m, photoUri: remoteUrl };
+              if (remoteUrl) m.photoUri = remoteUrl;
             }
-            return m;
-          })
-        );
-        const rows = withUploads.map((m) => memoryToRow(m, userId));
-        const { error: upsertErr } = await supabase
-          .from('memories')
-          .upsert(rows, { onConflict: 'id' });
-        if (upsertErr) {
-          console.warn('Local migration failed:', upsertErr.message);
+          }
+          const rows = localOnly.map((m) => memoryToRow(m, userId));
+          const { error: upsertErr } = await supabase
+            .from('memories')
+            .upsert(rows, { onConflict: 'id' });
+          if (upsertErr) {
+            console.warn('Local migration failed:', upsertErr.message);
+          }
         }
       }
 
-      const mems = [...remoteMems, ...localOnly];
-      mems.sort((a, b) => b.date.getTime() - a.date.getTime());
+      const mems = localOnly.length > 0
+        ? [...remoteMems, ...localOnly].sort((a, b) => b.date.getTime() - a.date.getTime())
+        : remoteMems;
       setMemories(mems);
       prevRef.current = mems;
       await cacheLocally(mems);
@@ -190,24 +171,32 @@ export default function useMemoryStorage() {
   }, [userId, loadFromLocal]);
 
   // Real-time subscription — reload when another device changes memories
+  const loadRef = useRef(loadFromSupabase);
+  loadRef.current = loadFromSupabase;
+
   useEffect(() => {
     if (!userId) return;
 
+    let debounceTimer: ReturnType<typeof setTimeout>;
     const channel = supabase
       .channel('memories-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'memories', filter: `user_id=eq.${userId}` },
         () => {
-          loadFromSupabase();
+          // Skip reload if we just saved (self-triggered event)
+          if (savingRef.current) return;
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => loadRef.current(), 500);
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
-  }, [userId, loadFromSupabase]);
+  }, [userId]);
 
   const reload = useCallback(async () => {
     if (userId) {
@@ -227,6 +216,7 @@ export default function useMemoryStorage() {
       await cacheLocally(mems);
 
       if (!userId) return;
+      savingRef.current = true;
 
       const prev = prevRef.current;
       prevRef.current = mems;
@@ -291,6 +281,8 @@ export default function useMemoryStorage() {
         }
       } catch (err) {
         console.warn('Supabase sync failed:', err);
+      } finally {
+        setTimeout(() => { savingRef.current = false; }, 1000);
       }
     },
     [userId]
